@@ -43,7 +43,7 @@ function App() {
 
   return (
     <main className="container">
-      <h1>Purchase Order Viewer</h1>
+      <h1>Purchase Order App</h1>
 
       <div className="layout">
         <section>
