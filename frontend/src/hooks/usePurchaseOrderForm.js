@@ -148,10 +148,18 @@ export default function usePurchaseOrderForm({
     }));
 
     setValidationErrors((currentErrors) => {
-      const nextItemErrors = [...currentErrors.items];
+      const currentItemErrors = Array.isArray(currentErrors.items)
+        ? currentErrors.items
+        : [];
+      const nextItemErrors = Array.from(
+        {
+          length: Math.max(currentItemErrors.length, index + 1),
+        },
+        (_, itemIndex) => currentItemErrors[itemIndex] || {}
+      );
 
       nextItemErrors[index] = {
-        ...(nextItemErrors[index] || {}),
+        ...nextItemErrors[index],
         [name]: "",
       };
 

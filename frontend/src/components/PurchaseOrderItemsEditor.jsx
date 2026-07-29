@@ -9,6 +9,10 @@ function PurchaseOrderItemsEditor({
   onRemoveItem,
 }) {
   const estimatedTotal = calculatePurchaseOrderTotal(items);
+  const itemValidationErrors = Array.isArray(errors) ? errors : [];
+  const generalError = itemValidationErrors.find(
+    (itemErrors) => itemErrors?.general
+  )?.general;
 
   return (
     <div className="items-section">
@@ -20,14 +24,10 @@ function PurchaseOrderItemsEditor({
         </button>
       </div>
 
-      {errors.find((itemErrors) => itemErrors.general)?.general && (
-        <p className="field-error">
-          {errors.find((itemErrors) => itemErrors.general).general}
-        </p>
-      )}
+      {generalError && <p className="field-error">{generalError}</p>}
 
       {items.map((item, index) => {
-        const itemErrors = errors[index] || {};
+        const itemErrors = itemValidationErrors[index] || {};
 
         return (
           <div className="item-row" key={item.id || index}>
