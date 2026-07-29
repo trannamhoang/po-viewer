@@ -3,11 +3,11 @@ import PurchaseOrderDetails from "./components/PurchaseOrderDetails";
 import PurchaseOrderFilters from "./components/PurchaseOrderFilters";
 import PurchaseOrderForm from "./components/PurchaseOrderForm";
 import PurchaseOrderList from "./components/PurchaseOrderList";
+import usePurchaseOrderDetail from "./hooks/usePurchaseOrderDetail";
 import usePurchaseOrders from "./hooks/usePurchaseOrders";
 import {
   createPurchaseOrder as createPurchaseOrderApi,
   deletePurchaseOrder as deletePurchaseOrderApi,
-  getPurchaseOrderById,
   updatePurchaseOrder as updatePurchaseOrderApi,
 } from "./services/purchaseOrderApi";
 import "./App.css";
@@ -41,9 +41,15 @@ function App() {
     resetPurchaseOrderFilters,
   } = usePurchaseOrders();
 
-  const [selectedPurchaseOrder, setSelectedPurchaseOrder] = useState(null);
-  const [detailLoading, setDetailLoading] = useState(false);
-  const [detailError, setDetailError] = useState("");
+  const {
+    selectedPurchaseOrder,
+    detailLoading,
+    detailError,
+    selectPurchaseOrder,
+    clearSelectedPurchaseOrder,
+    updateSelectedPurchaseOrder,
+  } = usePurchaseOrderDetail();
+
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [createLoading, setCreateLoading] = useState(false);
   const [createError, setCreateError] = useState("");
@@ -124,7 +130,7 @@ function App() {
         requestBody
       );
 
-      setSelectedPurchaseOrder(responseData);
+      updateSelectedPurchaseOrder(responseData);
       refreshPurchaseOrders();
       setShowEditForm(false);
     } catch (error) {
@@ -155,7 +161,7 @@ function App() {
 
       const responseData = await createPurchaseOrderApi(requestBody);
 
-      setSelectedPurchaseOrder(responseData);
+      updateSelectedPurchaseOrder(responseData);
       resetPurchaseOrderFilters();
       refreshPurchaseOrders();
 
@@ -181,20 +187,9 @@ function App() {
     }
   }
 
-  async function selectPurchaseOrder(purchaseOrder) {
-    try {
-      setDetailLoading(true);
-      setDetailError("");
-      setDeleteError("");
-
-      const responseData = await getPurchaseOrderById(purchaseOrder.id);
-
-      setSelectedPurchaseOrder(responseData);
-    } catch (error) {
-      setDetailError(error.message);
-    } finally {
-      setDetailLoading(false);
-    }
+  function handleSelectPurchaseOrder(purchaseOrder) {
+    setDeleteError("");
+    selectPurchaseOrder(purchaseOrder);
   }
 
   function openEditForm() {
@@ -286,7 +281,7 @@ function App() {
 
       await deletePurchaseOrderApi(selectedPurchaseOrder.id);
 
-      setSelectedPurchaseOrder(null);
+      clearSelectedPurchaseOrder();
       setShowEditForm(false);
 
       const shouldGoToPreviousPage =
@@ -453,7 +448,7 @@ function App() {
             selectedPurchaseOrderId={
               selectedPurchaseOrder?.id ?? null
             }
-            onSelectPurchaseOrder={selectPurchaseOrder}
+            onSelectPurchaseOrder={handleSelectPurchaseOrder}
             onPreviousPage={goToPreviousPage}
             onNextPage={goToNextPage}
           />
