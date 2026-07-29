@@ -1,5 +1,6 @@
 {
   "editor.formatOnSave": true,
+  "python.defaultInterpreterPath": "${workspaceFolder}/backend/venv/Scripts/python.exe",
   "[javascript]": {
     "editor.defaultFormatter": "vscode.typescript-language-features"
   },

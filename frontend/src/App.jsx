@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
-import "./App.css";
 import Pagination from "./components/Pagination";
+import PurchaseOrderFilters from "./components/PurchaseOrderFilters";
+import "./App.css";
 
 const API_URL =
   import.meta.env.VITE_API_URL || "http://127.0.0.1:8000";
@@ -806,57 +807,23 @@ function App() {
       <div className="layout">
         <section aria-busy={loading}>
           <h2>Purchase Orders</h2>
-          <div className="filters">
-            <div className="search-box">
-              <input
-                type="text"
-                placeholder="Search by PO number or supplier..."
-                value={searchText}
-                onChange={(event) =>
-                  setSearchText(event.target.value)
-                }
-              />
 
-              {isSearchWaiting && (
-                <span className="search-status">
-                  Waiting to search...
-                </span>
-              )}
-
-              {searchText && (
-                <button
-                  type="button"
-                  onClick={() => setSearchText("")}
-                >
-                  Clear
-                </button>
-              )}
-            </div>
-
-            <select
-              value={statusFilter}
-              onChange={(event) => {
-                setStatusFilter(event.target.value);
-                setCurrentPage(1);
-              }}
-            >
-              <option value="All">All statuses</option>
-              <option value="Open">Open</option>
-              <option value="Approved">Approved</option>
-              <option value="Completed">Completed</option>
-            </select>
-            <select
-              value={pageSize}
-              onChange={(event) => {
-                setPageSize(Number(event.target.value));
-                setCurrentPage(1);
-              }}
-            >
-              <option value={5}>5 per page</option>
-              <option value={10}>10 per page</option>
-              <option value={20}>20 per page</option>
-            </select>
-          </div>
+          <PurchaseOrderFilters
+            searchText={searchText}
+            isSearchWaiting={isSearchWaiting}
+            statusFilter={statusFilter}
+            pageSize={pageSize}
+            onSearchChange={setSearchText}
+            onClearSearch={() => setSearchText("")}
+            onStatusChange={(newStatus) => {
+              setStatusFilter(newStatus);
+              setCurrentPage(1);
+            }}
+            onPageSizeChange={(newPageSize) => {
+              setPageSize(newPageSize);
+              setCurrentPage(1);
+            }}
+          />
 
           {loading && (
             <p className="loading-message" role="status">
