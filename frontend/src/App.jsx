@@ -76,17 +76,17 @@ function App() {
       setUpdateLoading(true);
       setUpdateError("");
 
-    const requestBody = {
-      po_number: editPO.po_number,
-      supplier: editPO.supplier,
-      order_date: editPO.order_date,
-      status: editPO.status,
-      items: editPO.items.map((item) => ({
-        product: item.product,
-        quantity: Number(item.quantity),
-        unit_price: Number(item.unit_price),
-      })),
-    };
+      const requestBody = {
+        po_number: editPO.po_number,
+        supplier: editPO.supplier,
+        order_date: editPO.order_date,
+        status: editPO.status,
+        items: editPO.items.map((item) => ({
+          product: item.product,
+          quantity: Number(item.quantity),
+          unit_price: Number(item.unit_price),
+        })),
+      };
 
       const response = await fetch(
         `${API_URL}/purchase-orders/${editPO.id}`,
@@ -104,7 +104,7 @@ function App() {
       if (!response.ok) {
         throw new Error(
           responseData.detail ||
-            "Could not update purchase order"
+          "Could not update purchase order"
         );
       }
 
@@ -187,7 +187,7 @@ function App() {
     } finally {
       setCreateLoading(false);
     }
-  }       
+  }
 
   useEffect(() => {
     fetch(`${API_URL}/purchase-orders`)
@@ -419,7 +419,7 @@ function App() {
     (total, item) =>
       total +
       Number(item.quantity || 0) *
-        Number(item.unit_price || 0),
+      Number(item.unit_price || 0),
     0
   );
 
@@ -427,9 +427,24 @@ function App() {
     (total, item) =>
       total +
       Number(item.quantity || 0) *
-        Number(item.unit_price || 0),
+      Number(item.unit_price || 0),
     0
   );
+
+  function getAllowedStatuses(currentStatus) {
+    if (currentStatus === "Open") {
+      return ["Open", "Approved"];
+    }
+
+    if (currentStatus === "Approved") {
+      return ["Approved", "Completed"];
+    }
+
+    return ["Completed"];
+  }
+
+  const canEditPurchaseOrderContent =
+    selectedPurchaseOrder?.status === "Open";
 
   if (loading) {
     return <main className="container">Loading purchase orders...</main>;
@@ -496,15 +511,11 @@ function App() {
 
               <label>
                 Status
-                <select
-                  name="status"
-                  value={newPO.status}
-                  onChange={handleNewPOChange}
-                >
-                  <option value="Open">Open</option>
-                  <option value="Approved">Approved</option>
-                  <option value="Completed">Completed</option>
-                </select>
+                <input
+                  type="text"
+                  value="Open"
+                  disabled
+                />
               </label>
 
             </div>
@@ -612,6 +623,7 @@ function App() {
                   name="supplier"
                   value={editPO.supplier}
                   onChange={handleEditPOChange}
+                  disabled={!canEditPurchaseOrderContent}
                   required
                 />
               </label>
@@ -623,6 +635,7 @@ function App() {
                   name="order_date"
                   value={editPO.order_date}
                   onChange={handleEditPOChange}
+                  disabled={!canEditPurchaseOrderContent}
                   required
                 />
               </label>
@@ -634,13 +647,17 @@ function App() {
                   value={editPO.status}
                   onChange={handleEditPOChange}
                 >
-                  <option value="Open">Open</option>
-                  <option value="Approved">Approved</option>
-                  <option value="Completed">Completed</option>
+                  {getAllowedStatuses(
+                    selectedPurchaseOrder.status
+                  ).map((status) => (
+                    <option key={status} value={status}>
+                      {status}
+                    </option>
+                  ))}
                 </select>
               </label>
 
-              
+
             </div>
 
             <div className="items-section">
@@ -666,6 +683,7 @@ function App() {
                       onChange={(event) =>
                         handleEditItemChange(index, event)
                       }
+                      disabled={!canEditPurchaseOrderContent}
                       required
                     />
                   </label>
@@ -680,6 +698,7 @@ function App() {
                       onChange={(event) =>
                         handleEditItemChange(index, event)
                       }
+                      disabled={!canEditPurchaseOrderContent}
                       required
                     />
                   </label>
@@ -695,6 +714,7 @@ function App() {
                       onChange={(event) =>
                         handleEditItemChange(index, event)
                       }
+                      disabled={!canEditPurchaseOrderContent}
                       required
                     />
                   </label>
@@ -703,7 +723,10 @@ function App() {
                     type="button"
                     className="remove-item-button"
                     onClick={() => removeEditItem(index)}
-                    disabled={editPO.items.length === 1}
+                    disabled={
+                      !canEditPurchaseOrderContent ||
+                      editPO.items.length === 1
+                    }
                   >
                     Remove
                   </button>
@@ -772,7 +795,13 @@ function App() {
                 >
                   <td>{purchaseOrder.po_number}</td>
                   <td>{purchaseOrder.supplier}</td>
-                  <td>{purchaseOrder.status}</td>
+                  <td>
+                    <span
+                      className={`status-badge status-${purchaseOrder.status.toLowerCase()}`}
+                    >
+                      {purchaseOrder.status}
+                    </span>
+                  </td>
                   <td>${purchaseOrder.total_amount.toLocaleString()}</td>
                 </tr>
               ))}
@@ -798,29 +827,40 @@ function App() {
 
           {!detailLoading && !detailError && !selectedPurchaseOrder && (
             <p>Select a purchase order to view its details.</p>
-            
+
           )}
 
           {!detailLoading && !detailError && selectedPurchaseOrder && (
             <>
-            <div className="detail-actions">
-              <button
-                type="button"
-                onClick={openEditForm}
-                disabled={deleteLoading}
-              >
-                Edit PO
-              </button>
+              <div className="detail-actions">
+                {selectedPurchaseOrder.status !== "Completed" && (
+                  <button
+                    type="button"
+                    onClick={openEditForm}
+                  >
+                    {selectedPurchaseOrder.status === "Open"
+                      ? "Edit PO"
+                      : "Complete PO"}
+                  </button>
+                )}
 
-              <button
-                type="button"
-                className="delete-button"
-                onClick={deletePurchaseOrder}
-                disabled={deleteLoading}
-              >
-                {deleteLoading ? "Deleting..." : "Delete PO"}
-              </button>
-            </div>
+                <button
+                  type="button"
+                  className="delete-button"
+                  onClick={deletePurchaseOrder}
+                  disabled={
+                    deleteLoading ||
+                    selectedPurchaseOrder.status === "Completed"
+                  }
+                >
+                  {deleteLoading ? "Deleting..." : "Delete PO"}
+                </button>
+              </div>
+              {selectedPurchaseOrder.status === "Completed" && (
+                <p className="status-message">
+                  Completed purchase orders cannot be edited or deleted.
+                </p>
+              )}
               <p>
                 <strong>PO Number:</strong>{" "}
                 {selectedPurchaseOrder.po_number}
@@ -838,7 +878,11 @@ function App() {
 
               <p>
                 <strong>Status:</strong>{" "}
-                {selectedPurchaseOrder.status}
+                <span
+                  className={`status-badge status-${selectedPurchaseOrder.status.toLowerCase()}`}
+                >
+                  {selectedPurchaseOrder.status}
+                </span>
               </p>
 
               <h3>Items</h3>

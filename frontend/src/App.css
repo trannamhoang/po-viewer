@@ -252,3 +252,32 @@ button:disabled {
     grid-template-columns: 1fr;
   }
 }
+
+.status-badge {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: bold;
+}
+
+.status-open {
+  background: #fff3cd;
+  color: #664d03;
+}
+
+.status-approved {
+  background: #cfe2ff;
+  color: #084298;
+}
+
+.status-completed {
+  background: #d1e7dd;
+  color: #0f5132;
+}
+
+.status-message {
+  margin-top: 12px;
+  color: #666;
+  font-size: 14px;
+}

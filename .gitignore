@@ -17,7 +17,8 @@ frontend/dist/
 .env.local
 
 # VS Code
-.vscode/
+.vscode/*
+!.vscode/settings.json
 
 # Operating system
 .DS_Store

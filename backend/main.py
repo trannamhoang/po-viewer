@@ -51,11 +51,88 @@ class PurchaseOrderUpdate(BaseModel):
     status: str
     items: List[PurchaseOrderItemRequest]
 
+VALID_STATUSES = {
+    "Open",
+    "Approved",
+    "Completed",
+}
 
+ALLOWED_STATUS_TRANSITIONS = {
+    "Open": {"Open", "Approved"},
+    "Approved": {"Approved", "Completed"},
+    "Completed": {"Completed"},
+}
 # =========================================================
 # Helper functions
 # =========================================================
+def has_purchase_order_content_changed(
+    purchase_order: models.PurchaseOrder,
+    updated_po: PurchaseOrderUpdate,
+):
+    current_items = [
+        {
+            "product": item.product,
+            "quantity": item.quantity,
+            "unit_price": item.unit_price,
+        }
+        for item in purchase_order.items
+    ]
 
+    updated_items = [
+        {
+            "product": item.product.strip(),
+            "quantity": item.quantity,
+            "unit_price": item.unit_price,
+        }
+        for item in updated_po.items
+    ]
+
+    return any(
+        [
+            purchase_order.po_number
+            != updated_po.po_number.strip(),
+
+            purchase_order.supplier
+            != updated_po.supplier.strip(),
+
+            purchase_order.order_date
+            != updated_po.order_date,
+
+            current_items != updated_items,
+        ]
+    )
+
+def validate_status(status: str):
+    if status not in VALID_STATUSES:
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                "Invalid status. "
+                "Allowed values: Open, Approved, Completed"
+            ),
+        )
+
+def validate_status_transition(
+    current_status: str,
+    new_status: str,
+):
+    validate_status(new_status)
+
+    allowed_statuses = ALLOWED_STATUS_TRANSITIONS.get(
+        current_status,
+        set(),
+    )
+
+    if new_status not in allowed_statuses:
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                f"Cannot change status from "
+                f"{current_status} to {new_status}"
+            ),
+        )
+
+    
 def calculate_total(items: List[PurchaseOrderItemRequest]):
     return sum(
         item.quantity * item.unit_price
@@ -248,6 +325,17 @@ def create_purchase_order(
             detail="Purchase order must contain at least one item",
         )
 
+    validate_status(new_po.status)
+
+    if new_po.status != "Open":
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                "A new purchase order must start "
+                "with Open status"
+            ),
+        )
+
     purchase_order = models.PurchaseOrder(
         po_number=new_po.po_number.strip(),
         supplier=new_po.supplier.strip(),
@@ -311,6 +399,26 @@ def update_purchase_order(
         database,
         po_id,
     )
+
+    validate_status_transition(
+        purchase_order.status,
+        updated_po.status,
+    )
+
+    if (
+        purchase_order.status in {"Approved", "Completed"}
+        and has_purchase_order_content_changed(
+            purchase_order,
+            updated_po,
+        )
+    ):
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                f"A {purchase_order.status} purchase order "
+                "cannot be edited"
+            ),
+        )
 
     purchase_order.po_number = (
         updated_po.po_number.strip()
@@ -382,7 +490,11 @@ def delete_purchase_order(
         database,
         po_id,
     )
-
+    if purchase_order.status == "Completed":
+        raise HTTPException(
+            status_code=400,
+            detail="A completed purchase order cannot be deleted",
+        )
     database.delete(purchase_order)
     database.commit()
 
