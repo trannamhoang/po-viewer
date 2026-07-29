@@ -521,7 +521,7 @@ function App() {
               </div>
 
               {newPO.items.map((item, index) => (
-                <div className="item-row" key={index}>
+                <div className="item-row" key={item.id || index}>
                   <label>
                     Product
                     <input
@@ -656,7 +656,7 @@ function App() {
               </div>
 
               {editPO.items.map((item, index) => (
-                <div className="item-row" key={index}>
+                <div className="item-row" key={item.id || index}>
                   <label>
                     Product
                     <input
