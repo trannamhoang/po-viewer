@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import PurchaseOrderDetails from "./components/PurchaseOrderDetails";
 import PurchaseOrderFilters from "./components/PurchaseOrderFilters";
+import PurchaseOrderItemsEditor from "./components/PurchaseOrderItemsEditor";
 import PurchaseOrderList from "./components/PurchaseOrderList";
 import "./App.css";
 
@@ -467,22 +468,6 @@ function App() {
     });
   }
 
-  const newPOTotal = newPO.items.reduce(
-    (total, item) =>
-      total +
-      Number(item.quantity || 0) *
-      Number(item.unit_price || 0),
-    0
-  );
-
-  const editPOTotal = editPO.items.reduce(
-    (total, item) =>
-      total +
-      Number(item.quantity || 0) *
-      Number(item.unit_price || 0),
-    0
-  );
-
   function getAllowedStatuses(currentStatus) {
     if (currentStatus === "Open") {
       return ["Open", "Approved"];
@@ -566,76 +551,12 @@ function App() {
               </label>
 
             </div>
-            <div className="items-section">
-              <div className="items-header">
-                <h3>Items</h3>
-
-                <button
-                  type="button"
-                  onClick={addNewItem}
-                >
-                  Add Item
-                </button>
-              </div>
-
-              {newPO.items.map((item, index) => (
-                <div className="item-row" key={item.id || index}>
-                  <label>
-                    Product
-                    <input
-                      type="text"
-                      name="product"
-                      value={item.product}
-                      onChange={(event) =>
-                        handleNewItemChange(index, event)
-                      }
-                      required
-                    />
-                  </label>
-
-                  <label>
-                    Quantity
-                    <input
-                      type="number"
-                      name="quantity"
-                      min="1"
-                      value={item.quantity}
-                      onChange={(event) =>
-                        handleNewItemChange(index, event)
-                      }
-                      required
-                    />
-                  </label>
-
-                  <label>
-                    Unit Price
-                    <input
-                      type="number"
-                      name="unit_price"
-                      min="0"
-                      step="0.01"
-                      value={item.unit_price}
-                      onChange={(event) =>
-                        handleNewItemChange(index, event)
-                      }
-                      required
-                    />
-                  </label>
-
-                  <button
-                    type="button"
-                    className="remove-item-button"
-                    onClick={() => removeNewItem(index)}
-                    disabled={newPO.items.length === 1}
-                  >
-                    Remove
-                  </button>
-                </div>
-              ))}
-            </div>
-            <p className="form-total">
-              Estimated total: ${newPOTotal.toLocaleString()}
-            </p>
+            <PurchaseOrderItemsEditor
+              items={newPO.items}
+              onItemChange={handleNewItemChange}
+              onAddItem={addNewItem}
+              onRemoveItem={removeNewItem}
+            />
             <button type="submit" disabled={createLoading}>
               {createLoading ? "Creating..." : "Save Purchase Order"}
             </button>
@@ -708,83 +629,13 @@ function App() {
 
             </div>
 
-            <div className="items-section">
-              <div className="items-header">
-                <h3>Items</h3>
-
-                <button
-                  type="button"
-                  onClick={addEditItem}
-                  disabled={!canEditPurchaseOrderContent}
-                >
-                  Add Item
-                </button>
-              </div>
-
-              {editPO.items.map((item, index) => (
-                <div className="item-row" key={item.id || index}>
-                  <label>
-                    Product
-                    <input
-                      type="text"
-                      name="product"
-                      value={item.product}
-                      onChange={(event) =>
-                        handleEditItemChange(index, event)
-                      }
-                      disabled={!canEditPurchaseOrderContent}
-                      required
-                    />
-                  </label>
-
-                  <label>
-                    Quantity
-                    <input
-                      type="number"
-                      name="quantity"
-                      min="1"
-                      value={item.quantity}
-                      onChange={(event) =>
-                        handleEditItemChange(index, event)
-                      }
-                      disabled={!canEditPurchaseOrderContent}
-                      required
-                    />
-                  </label>
-
-                  <label>
-                    Unit Price
-                    <input
-                      type="number"
-                      name="unit_price"
-                      min="0"
-                      step="0.01"
-                      value={item.unit_price}
-                      onChange={(event) =>
-                        handleEditItemChange(index, event)
-                      }
-                      disabled={!canEditPurchaseOrderContent}
-                      required
-                    />
-                  </label>
-
-                  <button
-                    type="button"
-                    className="remove-item-button"
-                    onClick={() => removeEditItem(index)}
-                    disabled={
-                      !canEditPurchaseOrderContent ||
-                      editPO.items.length === 1
-                    }
-                  >
-                    Remove
-                  </button>
-                </div>
-              ))}
-            </div>
-            <p className="form-total">
-              Estimated total: ${editPOTotal.toLocaleString()}
-            </p>
+            <PurchaseOrderItemsEditor
+              items={editPO.items}
+              disabled={!canEditPurchaseOrderContent}
+              onItemChange={handleEditItemChange}
+              onAddItem={addEditItem}
+              onRemoveItem={removeEditItem}
+            />
             <div className="form-actions">
               <button
                 type="submit"
