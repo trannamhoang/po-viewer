@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import PurchaseOrderDetails from "./components/PurchaseOrderDetails";
 import PurchaseOrderFilters from "./components/PurchaseOrderFilters";
-import PurchaseOrderItemsEditor from "./components/PurchaseOrderItemsEditor";
+import PurchaseOrderForm from "./components/PurchaseOrderForm";
 import PurchaseOrderList from "./components/PurchaseOrderList";
 import "./App.css";
 
@@ -477,7 +477,11 @@ function App() {
       return ["Approved", "Completed"];
     }
 
-    return ["Completed"];
+    if (currentStatus === "Completed") {
+      return ["Completed"];
+    }
+
+    return ["Open"];
   }
 
   const canEditPurchaseOrderContent =
@@ -499,162 +503,49 @@ function App() {
         {showCreateForm ? "Cancel" : "Create PO"}
       </button>
       {showCreateForm && (
-        <section className="create-form-section">
-          <h2>Create Purchase Order</h2>
-
-          {createError && (
-            <p className="error-message">{createError}</p>
-          )}
-
-          <form onSubmit={createPurchaseOrder}>
-            <div className="form-grid">
-              <label>
-                PO Number
-                <input
-                  type="text"
-                  name="po_number"
-                  value={newPO.po_number}
-                  onChange={handleNewPOChange}
-                  required
-                />
-              </label>
-
-              <label>
-                Supplier
-                <input
-                  type="text"
-                  name="supplier"
-                  value={newPO.supplier}
-                  onChange={handleNewPOChange}
-                  required
-                />
-              </label>
-
-              <label>
-                Order Date
-                <input
-                  type="date"
-                  name="order_date"
-                  value={newPO.order_date}
-                  onChange={handleNewPOChange}
-                  required
-                />
-              </label>
-
-              <label>
-                Status
-                <input
-                  type="text"
-                  value="Open"
-                  disabled
-                />
-              </label>
-
-            </div>
-            <PurchaseOrderItemsEditor
-              items={newPO.items}
-              onItemChange={handleNewItemChange}
-              onAddItem={addNewItem}
-              onRemoveItem={removeNewItem}
-            />
-            <button type="submit" disabled={createLoading}>
-              {createLoading ? "Creating..." : "Save Purchase Order"}
-            </button>
-          </form>
-        </section>
+        <PurchaseOrderForm
+          title="Create Purchase Order"
+          purchaseOrder={newPO}
+          loading={createLoading}
+          error={createError}
+          submitLabel="Save Purchase Order"
+          loadingLabel="Creating..."
+          allowedStatuses={["Open"]}
+          onFieldChange={handleNewPOChange}
+          onItemChange={handleNewItemChange}
+          onAddItem={addNewItem}
+          onRemoveItem={removeNewItem}
+          onSubmit={createPurchaseOrder}
+          onCancel={() => setShowCreateForm(false)}
+        />
       )}
       {showEditForm && (
-        <section className="create-form-section">
-          <h2>Edit Purchase Order</h2>
-
-          {updateError && (
-            <p className="error-message">{updateError}</p>
+        <PurchaseOrderForm
+          title={
+            selectedPurchaseOrder?.status === "Approved"
+              ? "Complete Purchase Order"
+              : "Edit Purchase Order"
+          }
+          purchaseOrder={editPO}
+          loading={updateLoading}
+          error={updateError}
+          submitLabel={
+            selectedPurchaseOrder?.status === "Approved"
+              ? "Complete Purchase Order"
+              : "Update Purchase Order"
+          }
+          loadingLabel="Updating..."
+          contentDisabled={!canEditPurchaseOrderContent}
+          allowedStatuses={getAllowedStatuses(
+            selectedPurchaseOrder?.status
           )}
-
-          <form onSubmit={updatePurchaseOrder}>
-            <div className="form-grid">
-              <label>
-                PO Number
-                <input
-                  type="text"
-                  name="po_number"
-                  value={editPO.po_number}
-                  onChange={handleEditPOChange}
-                  disabled={!canEditPurchaseOrderContent}
-                  required
-                />
-              </label>
-
-              <label>
-                Supplier
-                <input
-                  type="text"
-                  name="supplier"
-                  value={editPO.supplier}
-                  onChange={handleEditPOChange}
-                  disabled={!canEditPurchaseOrderContent}
-                  required
-                />
-              </label>
-
-              <label>
-                Order Date
-                <input
-                  type="date"
-                  name="order_date"
-                  value={editPO.order_date}
-                  onChange={handleEditPOChange}
-                  disabled={!canEditPurchaseOrderContent}
-                  required
-                />
-              </label>
-
-              <label>
-                Status
-                <select
-                  name="status"
-                  value={editPO.status}
-                  onChange={handleEditPOChange}
-                >
-                  {getAllowedStatuses(
-                    selectedPurchaseOrder.status
-                  ).map((status) => (
-                    <option key={status} value={status}>
-                      {status}
-                    </option>
-                  ))}
-                </select>
-              </label>
-
-
-            </div>
-
-            <PurchaseOrderItemsEditor
-              items={editPO.items}
-              disabled={!canEditPurchaseOrderContent}
-              onItemChange={handleEditItemChange}
-              onAddItem={addEditItem}
-              onRemoveItem={removeEditItem}
-            />
-            <div className="form-actions">
-              <button
-                type="submit"
-                disabled={updateLoading}
-              >
-                {updateLoading
-                  ? "Updating..."
-                  : "Update Purchase Order"}
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setShowEditForm(false)}
-              >
-                Cancel
-              </button>
-            </div>
-          </form>
-        </section>
+          onFieldChange={handleEditPOChange}
+          onItemChange={handleEditItemChange}
+          onAddItem={addEditItem}
+          onRemoveItem={removeEditItem}
+          onSubmit={updatePurchaseOrder}
+          onCancel={() => setShowEditForm(false)}
+        />
       )}
       <div className="layout">
         <section aria-busy={loading}>
