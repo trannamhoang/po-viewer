@@ -75,7 +75,7 @@ function App() {
         responseData,
       ]);
 
-      setSelectedPO(responseData);
+      setSelectedPurchaseOrder(responseData);
 
       setNewPO({
         po_number: "",
