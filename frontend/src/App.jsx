@@ -3,10 +3,14 @@ import PurchaseOrderDetails from "./components/PurchaseOrderDetails";
 import PurchaseOrderFilters from "./components/PurchaseOrderFilters";
 import PurchaseOrderForm from "./components/PurchaseOrderForm";
 import PurchaseOrderList from "./components/PurchaseOrderList";
+import {
+  createPurchaseOrder as createPurchaseOrderApi,
+  deletePurchaseOrder as deletePurchaseOrderApi,
+  getPurchaseOrderById,
+  getPurchaseOrders,
+  updatePurchaseOrder as updatePurchaseOrderApi,
+} from "./services/purchaseOrderApi";
 import "./App.css";
-
-const API_URL =
-  import.meta.env.VITE_API_URL || "http://127.0.0.1:8000";
 
 function App() {
   const [purchaseOrders, setPurchaseOrders] = useState([]);
@@ -110,25 +114,10 @@ function App() {
         })),
       };
 
-      const response = await fetch(
-        `${API_URL}/purchase-orders/${editPO.id}`,
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(requestBody),
-        }
+      const responseData = await updatePurchaseOrderApi(
+        editPO.id,
+        requestBody
       );
-
-      const responseData = await response.json();
-
-      if (!response.ok) {
-        throw new Error(
-          responseData.detail ||
-          "Could not update purchase order"
-        );
-      }
 
       setSelectedPurchaseOrder(responseData);
       setRefreshKey((currentValue) => currentValue + 1);
@@ -159,21 +148,7 @@ function App() {
         })),
       };
 
-      const response = await fetch(`${API_URL}/purchase-orders`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(requestBody),
-      });
-
-      const responseData = await response.json();
-
-      if (!response.ok) {
-        throw new Error(
-          responseData.detail || "Could not create purchase order"
-        );
-      }
+      const responseData = await createPurchaseOrderApi(requestBody);
 
       setSelectedPurchaseOrder(responseData);
       setRefreshKey((currentValue) => currentValue + 1);
@@ -213,36 +188,13 @@ function App() {
         setLoading(true);
         setError("");
 
-        const queryParameters = new URLSearchParams({
-          page: String(currentPage),
-          page_size: String(pageSize),
+        const responseData = await getPurchaseOrders({
+          page: currentPage,
+          pageSize,
+          search: debouncedSearchText,
+          status: statusFilter,
+          signal: controller.signal,
         });
-
-        if (debouncedSearchText.trim()) {
-          queryParameters.set(
-            "search",
-            debouncedSearchText.trim()
-          );
-        }
-
-        if (statusFilter !== "All") {
-          queryParameters.set("status", statusFilter);
-        }
-
-        const response = await fetch(
-          `${API_URL}/purchase-orders?${queryParameters.toString()}`,
-          {
-            signal: controller.signal,
-          }
-        );
-
-        if (!response.ok) {
-          throw new Error(
-            "Could not load purchase orders"
-          );
-        }
-
-        const responseData = await response.json();
 
         setPurchaseOrders(responseData.items);
         setTotalItems(responseData.total_items);
@@ -275,17 +227,9 @@ function App() {
     try {
       setDetailLoading(true);
       setDetailError("");
+      setDeleteError("");
 
-      const response = await fetch(
-        `${API_URL}/purchase-orders/${purchaseOrder.id}`
-      );
-      const responseData = await response.json();
-
-      if (!response.ok) {
-        throw new Error(
-          responseData.detail || "Could not load purchase order details"
-        );
-      }
+      const responseData = await getPurchaseOrderById(purchaseOrder.id);
 
       setSelectedPurchaseOrder(responseData);
     } catch (error) {
@@ -382,25 +326,7 @@ function App() {
       setDeleteLoading(true);
       setDeleteError("");
 
-      const response = await fetch(
-        `${API_URL}/purchase-orders/${selectedPurchaseOrder.id}`,
-        {
-          method: "DELETE",
-        }
-      );
-
-      if (!response.ok) {
-        let errorMessage = "Could not delete purchase order";
-
-        try {
-          const responseData = await response.json();
-          errorMessage = responseData.detail || errorMessage;
-        } catch {
-          // Response không có JSON body.
-        }
-
-        throw new Error(errorMessage);
-      }
+      await deletePurchaseOrderApi(selectedPurchaseOrder.id);
 
       setSelectedPurchaseOrder(null);
       setShowEditForm(false);
