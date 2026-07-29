@@ -63,6 +63,10 @@ tbody tr:hover {
   min-height: 350px;
 }
 
+.detail-field {
+  margin-bottom: 12px;
+}
+
 .total {
   margin-top: 20px;
   font-size: 20px;

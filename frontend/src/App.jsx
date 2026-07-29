@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import PurchaseOrderDetails from "./components/PurchaseOrderDetails";
 import PurchaseOrderFilters from "./components/PurchaseOrderFilters";
 import PurchaseOrderList from "./components/PurchaseOrderList";
 import "./App.css";
@@ -845,106 +846,15 @@ function App() {
           />
         </section>
 
-        <section className="details">
-          <h2>PO Details</h2>
-          {deleteError && (
-            <p className="error-message">{deleteError}</p>
-          )}
-          {detailLoading && <p>Loading purchase order details...</p>}
-
-          {detailError && (
-            <p className="error-message">{detailError}</p>
-          )}
-
-          {!detailLoading && !detailError && !selectedPurchaseOrder && (
-            <p>Select a purchase order to view its details.</p>
-
-          )}
-
-          {!detailLoading && !detailError && selectedPurchaseOrder && (
-            <>
-              <div className="detail-actions">
-                {selectedPurchaseOrder.status !== "Completed" && (
-                  <button
-                    type="button"
-                    onClick={openEditForm}
-                  >
-                    {selectedPurchaseOrder.status === "Open"
-                      ? "Edit PO"
-                      : "Complete PO"}
-                  </button>
-                )}
-
-                <button
-                  type="button"
-                  className="delete-button"
-                  onClick={deletePurchaseOrder}
-                  disabled={
-                    deleteLoading ||
-                    selectedPurchaseOrder.status === "Completed"
-                  }
-                >
-                  {deleteLoading ? "Deleting..." : "Delete PO"}
-                </button>
-              </div>
-              {selectedPurchaseOrder.status === "Completed" && (
-                <p className="status-message">
-                  Completed purchase orders cannot be edited or deleted.
-                </p>
-              )}
-              <p>
-                <strong>PO Number:</strong>{" "}
-                {selectedPurchaseOrder.po_number}
-              </p>
-
-              <p>
-                <strong>Supplier:</strong>{" "}
-                {selectedPurchaseOrder.supplier}
-              </p>
-
-              <p>
-                <strong>Order date:</strong>{" "}
-                {selectedPurchaseOrder.order_date}
-              </p>
-
-              <p>
-                <strong>Status:</strong>{" "}
-                <span
-                  className={`status-badge status-${selectedPurchaseOrder.status.toLowerCase()}`}
-                >
-                  {selectedPurchaseOrder.status}
-                </span>
-              </p>
-
-              <h3>Items</h3>
-
-              <table>
-                <thead>
-                  <tr>
-                    <th>Product</th>
-                    <th>Quantity</th>
-                    <th>Unit price</th>
-                  </tr>
-                </thead>
-
-                <tbody>
-                  {selectedPurchaseOrder.items.map((item, index) => (
-                    <tr key={`${item.product}-${index}`}>
-                      <td>{item.product}</td>
-                      <td>{item.quantity}</td>
-                      <td>${item.unit_price.toLocaleString()}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-
-              <p className="total">
-                Total: $
-                {selectedPurchaseOrder.total_amount.toLocaleString()}
-              </p>
-            </>
-          )}
-        </section>
+        <PurchaseOrderDetails
+          purchaseOrder={selectedPurchaseOrder}
+          detailLoading={detailLoading}
+          detailError={detailError}
+          deleteLoading={deleteLoading}
+          deleteError={deleteError}
+          onEdit={openEditForm}
+          onDelete={deletePurchaseOrder}
+        />
       </div>
     </main>
   );
