@@ -6,7 +6,9 @@ import {
 import {
   buildPurchaseOrderRequestBody,
   createEmptyPurchaseOrder,
+  createEmptyPurchaseOrderErrors,
   createEmptyPurchaseOrderItem,
+  validatePurchaseOrder,
 } from "../utils/purchaseOrderUtils";
 
 export default function usePurchaseOrderForm({
@@ -23,11 +25,19 @@ export default function usePurchaseOrderForm({
   const [createError, setCreateError] = useState("");
   const [updateError, setUpdateError] = useState("");
 
+  const [createValidationErrors, setCreateValidationErrors] = useState(
+    createEmptyPurchaseOrderErrors
+  );
+  const [updateValidationErrors, setUpdateValidationErrors] = useState(
+    createEmptyPurchaseOrderErrors
+  );
+
   const [newPO, setNewPO] = useState(createEmptyPurchaseOrder);
   const [editPO, setEditPO] = useState(createEmptyPurchaseOrder);
 
   function openCreateForm() {
     setCreateError("");
+    setCreateValidationErrors(createEmptyPurchaseOrderErrors());
     setShowEditForm(false);
     setShowCreateForm(true);
   }
@@ -39,6 +49,7 @@ export default function usePurchaseOrderForm({
 
     setShowCreateForm(false);
     setCreateError("");
+    setCreateValidationErrors(createEmptyPurchaseOrderErrors());
     setNewPO(createEmptyPurchaseOrder());
   }
 
@@ -71,6 +82,7 @@ export default function usePurchaseOrderForm({
     });
 
     setUpdateError("");
+    setUpdateValidationErrors(createEmptyPurchaseOrderErrors());
     setShowCreateForm(false);
     setShowEditForm(true);
   }
@@ -82,6 +94,14 @@ export default function usePurchaseOrderForm({
 
     setShowEditForm(false);
     setUpdateError("");
+    setUpdateValidationErrors(createEmptyPurchaseOrderErrors());
+  }
+
+  function clearFieldValidationError(setValidationErrors, fieldName) {
+    setValidationErrors((currentErrors) => ({
+      ...currentErrors,
+      [fieldName]: "",
+    }));
   }
 
   function handleNewPOChange(event) {
@@ -91,6 +111,8 @@ export default function usePurchaseOrderForm({
       ...currentPO,
       [name]: value,
     }));
+
+    clearFieldValidationError(setCreateValidationErrors, name);
   }
 
   function handleEditPOChange(event) {
@@ -100,9 +122,16 @@ export default function usePurchaseOrderForm({
       ...currentPO,
       [name]: value,
     }));
+
+    clearFieldValidationError(setUpdateValidationErrors, name);
   }
 
-  function handleItemChange(setPurchaseOrder, index, event) {
+  function handleItemChange(
+    setPurchaseOrder,
+    setValidationErrors,
+    index,
+    event
+  ) {
     const { name, value } = event.target;
 
     setPurchaseOrder((currentPO) => ({
@@ -116,14 +145,28 @@ export default function usePurchaseOrderForm({
           : item
       ),
     }));
+
+    setValidationErrors((currentErrors) => {
+      const nextItemErrors = [...currentErrors.items];
+
+      nextItemErrors[index] = {
+        ...(nextItemErrors[index] || {}),
+        [name]: "",
+      };
+
+      return {
+        ...currentErrors,
+        items: nextItemErrors,
+      };
+    });
   }
 
   function handleNewItemChange(index, event) {
-    handleItemChange(setNewPO, index, event);
+    handleItemChange(setNewPO, setCreateValidationErrors, index, event);
   }
 
   function handleEditItemChange(index, event) {
-    handleItemChange(setEditPO, index, event);
+    handleItemChange(setEditPO, setUpdateValidationErrors, index, event);
   }
 
   function addItem(setPurchaseOrder) {
@@ -141,7 +184,7 @@ export default function usePurchaseOrderForm({
     addItem(setEditPO);
   }
 
-  function removeItem(setPurchaseOrder, index) {
+  function removeItem(setPurchaseOrder, setValidationErrors, index) {
     setPurchaseOrder((currentPO) => {
       if (currentPO.items.length === 1) {
         return currentPO;
@@ -154,18 +197,33 @@ export default function usePurchaseOrderForm({
         ),
       };
     });
+
+    setValidationErrors((currentErrors) => ({
+      ...currentErrors,
+      items: currentErrors.items.filter(
+        (_, itemIndex) => itemIndex !== index
+      ),
+    }));
   }
 
   function removeNewItem(index) {
-    removeItem(setNewPO, index);
+    removeItem(setNewPO, setCreateValidationErrors, index);
   }
 
   function removeEditItem(index) {
-    removeItem(setEditPO, index);
+    removeItem(setEditPO, setUpdateValidationErrors, index);
   }
 
   async function createPurchaseOrder(event) {
     event.preventDefault();
+
+    const validationResult = validatePurchaseOrder(newPO);
+    setCreateValidationErrors(validationResult.errors);
+
+    if (!validationResult.isValid) {
+      setCreateError("Please correct the highlighted fields.");
+      return;
+    }
 
     try {
       setCreateLoading(true);
@@ -175,6 +233,7 @@ export default function usePurchaseOrderForm({
       const createdPurchaseOrder = await createPurchaseOrderApi(requestBody);
 
       setNewPO(createEmptyPurchaseOrder());
+      setCreateValidationErrors(createEmptyPurchaseOrderErrors());
       setShowCreateForm(false);
 
       await onCreated?.(createdPurchaseOrder);
@@ -192,6 +251,14 @@ export default function usePurchaseOrderForm({
       return;
     }
 
+    const validationResult = validatePurchaseOrder(editPO);
+    setUpdateValidationErrors(validationResult.errors);
+
+    if (!validationResult.isValid) {
+      setUpdateError("Please correct the highlighted fields.");
+      return;
+    }
+
     try {
       setUpdateLoading(true);
       setUpdateError("");
@@ -202,6 +269,7 @@ export default function usePurchaseOrderForm({
         requestBody
       );
 
+      setUpdateValidationErrors(createEmptyPurchaseOrderErrors());
       setShowEditForm(false);
 
       await onUpdated?.(updatedPurchaseOrder);
@@ -217,6 +285,8 @@ export default function usePurchaseOrderForm({
     setShowEditForm(false);
     setCreateError("");
     setUpdateError("");
+    setCreateValidationErrors(createEmptyPurchaseOrderErrors());
+    setUpdateValidationErrors(createEmptyPurchaseOrderErrors());
   }
 
   return {
@@ -228,6 +298,9 @@ export default function usePurchaseOrderForm({
 
     createError,
     updateError,
+
+    createValidationErrors,
+    updateValidationErrors,
 
     newPO,
     editPO,

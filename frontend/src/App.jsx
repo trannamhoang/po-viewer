@@ -70,6 +70,9 @@ function App() {
     createError,
     updateError,
 
+    createValidationErrors,
+    updateValidationErrors,
+
     newPO,
     editPO,
 
@@ -165,6 +168,7 @@ function App() {
           purchaseOrder={newPO}
           loading={createLoading}
           error={createError}
+          validationErrors={createValidationErrors}
           submitLabel="Save Purchase Order"
           loadingLabel="Creating..."
           allowedStatuses={[PURCHASE_ORDER_STATUS.OPEN]}
@@ -186,6 +190,7 @@ function App() {
           purchaseOrder={editPO}
           loading={updateLoading}
           error={updateError}
+          validationErrors={updateValidationErrors}
           submitLabel={
             selectedPurchaseOrder?.status === PURCHASE_ORDER_STATUS.APPROVED
               ? "Complete Purchase Order"

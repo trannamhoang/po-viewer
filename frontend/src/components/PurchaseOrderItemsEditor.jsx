@@ -2,6 +2,7 @@ import { calculatePurchaseOrderTotal } from "../utils/purchaseOrderUtils";
 
 function PurchaseOrderItemsEditor({
   items,
+  errors = [],
   disabled = false,
   onItemChange,
   onAddItem,
@@ -19,60 +20,83 @@ function PurchaseOrderItemsEditor({
         </button>
       </div>
 
-      {items.map((item, index) => (
-        <div className="item-row" key={item.id || index}>
-          <label>
-            Product
+      {errors.find((itemErrors) => itemErrors.general)?.general && (
+        <p className="field-error">
+          {errors.find((itemErrors) => itemErrors.general).general}
+        </p>
+      )}
 
-            <input
-              type="text"
-              name="product"
-              value={item.product}
-              onChange={(event) => onItemChange(index, event)}
-              disabled={disabled}
-              required
-            />
-          </label>
+      {items.map((item, index) => {
+        const itemErrors = errors[index] || {};
 
-          <label>
-            Quantity
+        return (
+          <div className="item-row" key={item.id || index}>
+            <label>
+              Product
 
-            <input
-              type="number"
-              name="quantity"
-              min="1"
-              value={item.quantity}
-              onChange={(event) => onItemChange(index, event)}
-              disabled={disabled}
-              required
-            />
-          </label>
+              <input
+                type="text"
+                name="product"
+                value={item.product}
+                onChange={(event) => onItemChange(index, event)}
+                disabled={disabled}
+                aria-invalid={Boolean(itemErrors.product)}
+              />
 
-          <label>
-            Unit Price
+              {itemErrors.product && (
+                <span className="field-error">{itemErrors.product}</span>
+              )}
+            </label>
 
-            <input
-              type="number"
-              name="unit_price"
-              min="0"
-              step="0.01"
-              value={item.unit_price}
-              onChange={(event) => onItemChange(index, event)}
-              disabled={disabled}
-              required
-            />
-          </label>
+            <label>
+              Quantity
 
-          <button
-            type="button"
-            className="remove-item-button"
-            onClick={() => onRemoveItem(index)}
-            disabled={disabled || items.length === 1}
-          >
-            Remove
-          </button>
-        </div>
-      ))}
+              <input
+                type="number"
+                name="quantity"
+                min="1"
+                step="1"
+                value={item.quantity}
+                onChange={(event) => onItemChange(index, event)}
+                disabled={disabled}
+                aria-invalid={Boolean(itemErrors.quantity)}
+              />
+
+              {itemErrors.quantity && (
+                <span className="field-error">{itemErrors.quantity}</span>
+              )}
+            </label>
+
+            <label>
+              Unit Price
+
+              <input
+                type="number"
+                name="unit_price"
+                min="0.01"
+                step="0.01"
+                value={item.unit_price}
+                onChange={(event) => onItemChange(index, event)}
+                disabled={disabled}
+                aria-invalid={Boolean(itemErrors.unit_price)}
+              />
+
+              {itemErrors.unit_price && (
+                <span className="field-error">{itemErrors.unit_price}</span>
+              )}
+            </label>
+
+            <button
+              type="button"
+              className="remove-item-button"
+              onClick={() => onRemoveItem(index)}
+              disabled={disabled || items.length === 1}
+            >
+              Remove
+            </button>
+          </div>
+        );
+      })}
 
       <p className="form-total">
         Estimated total: ${estimatedTotal.toLocaleString()}

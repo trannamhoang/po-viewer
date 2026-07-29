@@ -222,7 +222,7 @@ button:disabled {
   display: grid;
   grid-template-columns: 2fr 1fr 1fr auto;
   gap: 12px;
-  align-items: end;
+  align-items: flex-start;
   margin-bottom: 12px;
   padding: 16px;
   border: 1px solid #ddd;
@@ -240,6 +240,24 @@ button:disabled {
   padding: 10px;
   border: 1px solid #ccc;
   border-radius: 4px;
+}
+
+.field-error {
+  display: block;
+  margin-top: 6px;
+  font-size: 0.85rem;
+  color: #b42318;
+}
+
+input[aria-invalid="true"],
+select[aria-invalid="true"] {
+  border-color: #b42318;
+}
+
+input[aria-invalid="true"]:focus,
+select[aria-invalid="true"]:focus {
+  outline: 2px solid rgba(180, 35, 24, 0.2);
+  border-color: #b42318;
 }
 
 .remove-item-button {
