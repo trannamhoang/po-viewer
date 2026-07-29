@@ -1,3 +1,5 @@
+import { PURCHASE_ORDER_STATUS } from "../constants/purchaseOrderConstants";
+
 function PurchaseOrderDetails({
   purchaseOrder,
   detailLoading,
@@ -41,9 +43,10 @@ function PurchaseOrderDetails({
     );
   }
 
-  const isOpen = purchaseOrder.status === "Open";
-  const isApproved = purchaseOrder.status === "Approved";
-  const isCompleted = purchaseOrder.status === "Completed";
+  const isOpen = purchaseOrder.status === PURCHASE_ORDER_STATUS.OPEN;
+  const isApproved = purchaseOrder.status === PURCHASE_ORDER_STATUS.APPROVED;
+  const isCompleted =
+    purchaseOrder.status === PURCHASE_ORDER_STATUS.COMPLETED;
 
   return (
     <section className="details">

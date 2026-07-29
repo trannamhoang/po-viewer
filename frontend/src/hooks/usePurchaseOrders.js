@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { ALL_STATUS_FILTER } from "../constants/purchaseOrderConstants";
 import { getPurchaseOrders } from "../services/purchaseOrderApi";
 
 export default function usePurchaseOrders() {
@@ -8,7 +9,7 @@ export default function usePurchaseOrders() {
 
   const [searchText, setSearchText] = useState("");
   const [debouncedSearchText, setDebouncedSearchText] = useState("");
-  const [statusFilter, setStatusFilter] = useState("All");
+  const [statusFilter, setStatusFilter] = useState(ALL_STATUS_FILTER);
 
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(5);
@@ -101,7 +102,7 @@ export default function usePurchaseOrders() {
   function resetPurchaseOrderFilters() {
     setSearchText("");
     setDebouncedSearchText("");
-    setStatusFilter("All");
+    setStatusFilter(ALL_STATUS_FILTER);
     setCurrentPage(1);
   }
 

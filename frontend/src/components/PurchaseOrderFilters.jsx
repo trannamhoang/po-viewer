@@ -1,3 +1,9 @@
+import {
+  ALL_STATUS_FILTER,
+  PAGE_SIZE_OPTIONS,
+  PURCHASE_ORDER_STATUS,
+} from "../constants/purchaseOrderConstants";
+
 function PurchaseOrderFilters({
   searchText,
   isSearchWaiting,
@@ -39,10 +45,12 @@ function PurchaseOrderFilters({
           onStatusChange(event.target.value)
         }
       >
-        <option value="All">All statuses</option>
-        <option value="Open">Open</option>
-        <option value="Approved">Approved</option>
-        <option value="Completed">Completed</option>
+        <option value={ALL_STATUS_FILTER}>All statuses</option>
+        {Object.values(PURCHASE_ORDER_STATUS).map((status) => (
+          <option key={status} value={status}>
+            {status}
+          </option>
+        ))}
       </select>
 
       <select
@@ -51,9 +59,11 @@ function PurchaseOrderFilters({
           onPageSizeChange(Number(event.target.value))
         }
       >
-        <option value={5}>5 per page</option>
-        <option value={10}>10 per page</option>
-        <option value={20}>20 per page</option>
+        {PAGE_SIZE_OPTIONS.map((size) => (
+          <option key={size} value={size}>
+            {size} per page
+          </option>
+        ))}
       </select>
     </div>
   );

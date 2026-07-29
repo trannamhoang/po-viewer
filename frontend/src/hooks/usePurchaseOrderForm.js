@@ -3,27 +3,11 @@ import {
   createPurchaseOrder as createPurchaseOrderApi,
   updatePurchaseOrder as updatePurchaseOrderApi,
 } from "../services/purchaseOrderApi";
-
-const EMPTY_ITEM = {
-  product: "",
-  quantity: 1,
-  unit_price: 0,
-};
-
-const EMPTY_PURCHASE_ORDER = {
-  po_number: "",
-  supplier: "",
-  order_date: "",
-  status: "Open",
-  items: [{ ...EMPTY_ITEM }],
-};
-
-function createEmptyPurchaseOrder() {
-  return {
-    ...EMPTY_PURCHASE_ORDER,
-    items: [{ ...EMPTY_ITEM }],
-  };
-}
+import {
+  buildPurchaseOrderRequestBody,
+  createEmptyPurchaseOrder,
+  createEmptyPurchaseOrderItem,
+} from "../utils/purchaseOrderUtils";
 
 export default function usePurchaseOrderForm({
   selectedPurchaseOrder,
@@ -55,6 +39,7 @@ export default function usePurchaseOrderForm({
 
     setShowCreateForm(false);
     setCreateError("");
+    setNewPO(createEmptyPurchaseOrder());
   }
 
   function toggleCreateForm() {
@@ -144,7 +129,7 @@ export default function usePurchaseOrderForm({
   function addItem(setPurchaseOrder) {
     setPurchaseOrder((currentPO) => ({
       ...currentPO,
-      items: [...currentPO.items, { ...EMPTY_ITEM }],
+      items: [...currentPO.items, createEmptyPurchaseOrderItem()],
     }));
   }
 
@@ -179,20 +164,6 @@ export default function usePurchaseOrderForm({
     removeItem(setEditPO, index);
   }
 
-  function buildRequestBody(purchaseOrder) {
-    return {
-      po_number: purchaseOrder.po_number.trim(),
-      supplier: purchaseOrder.supplier.trim(),
-      order_date: purchaseOrder.order_date,
-      status: purchaseOrder.status,
-      items: purchaseOrder.items.map((item) => ({
-        product: item.product.trim(),
-        quantity: Number(item.quantity),
-        unit_price: Number(item.unit_price),
-      })),
-    };
-  }
-
   async function createPurchaseOrder(event) {
     event.preventDefault();
 
@@ -200,7 +171,7 @@ export default function usePurchaseOrderForm({
       setCreateLoading(true);
       setCreateError("");
 
-      const requestBody = buildRequestBody(newPO);
+      const requestBody = buildPurchaseOrderRequestBody(newPO);
       const createdPurchaseOrder = await createPurchaseOrderApi(requestBody);
 
       setNewPO(createEmptyPurchaseOrder());
@@ -225,7 +196,7 @@ export default function usePurchaseOrderForm({
       setUpdateLoading(true);
       setUpdateError("");
 
-      const requestBody = buildRequestBody(editPO);
+      const requestBody = buildPurchaseOrderRequestBody(editPO);
       const updatedPurchaseOrder = await updatePurchaseOrderApi(
         editPO.id,
         requestBody

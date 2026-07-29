@@ -1,0 +1,49 @@
+import {
+  PURCHASE_ORDER_STATUS,
+  STATUS_TRANSITIONS,
+} from "../constants/purchaseOrderConstants";
+
+export function createEmptyPurchaseOrderItem() {
+  return {
+    product: "",
+    quantity: 1,
+    unit_price: 0,
+  };
+}
+
+export function createEmptyPurchaseOrder() {
+  return {
+    po_number: "",
+    supplier: "",
+    order_date: "",
+    status: PURCHASE_ORDER_STATUS.OPEN,
+    items: [createEmptyPurchaseOrderItem()],
+  };
+}
+
+export function getAllowedPurchaseOrderStatuses(currentStatus) {
+  return STATUS_TRANSITIONS[currentStatus] || [PURCHASE_ORDER_STATUS.OPEN];
+}
+
+export function buildPurchaseOrderRequestBody(purchaseOrder) {
+  return {
+    po_number: purchaseOrder.po_number.trim(),
+    supplier: purchaseOrder.supplier.trim(),
+    order_date: purchaseOrder.order_date,
+    status: purchaseOrder.status,
+    items: purchaseOrder.items.map((item) => ({
+      product: item.product.trim(),
+      quantity: Number(item.quantity),
+      unit_price: Number(item.unit_price),
+    })),
+  };
+}
+
+export function calculatePurchaseOrderTotal(items) {
+  return items.reduce(
+    (total, item) =>
+      total +
+      Number(item.quantity || 0) * Number(item.unit_price || 0),
+    0
+  );
+}

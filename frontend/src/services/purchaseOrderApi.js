@@ -1,3 +1,5 @@
+import { ALL_STATUS_FILTER } from "../constants/purchaseOrderConstants";
+
 const API_URL =
   import.meta.env.VITE_API_URL || "http://127.0.0.1:8000";
 
@@ -41,7 +43,7 @@ export async function getPurchaseOrders({
     queryParameters.set("search", search.trim());
   }
 
-  if (status && status !== "All") {
+  if (status && status !== ALL_STATUS_FILTER) {
     queryParameters.set("status", status);
   }
 

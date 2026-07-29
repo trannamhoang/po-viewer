@@ -3,10 +3,12 @@ import PurchaseOrderDetails from "./components/PurchaseOrderDetails";
 import PurchaseOrderFilters from "./components/PurchaseOrderFilters";
 import PurchaseOrderForm from "./components/PurchaseOrderForm";
 import PurchaseOrderList from "./components/PurchaseOrderList";
+import { PURCHASE_ORDER_STATUS } from "./constants/purchaseOrderConstants";
 import usePurchaseOrderDetail from "./hooks/usePurchaseOrderDetail";
 import usePurchaseOrderForm from "./hooks/usePurchaseOrderForm";
 import usePurchaseOrders from "./hooks/usePurchaseOrders";
 import { deletePurchaseOrder as deletePurchaseOrderApi } from "./services/purchaseOrderApi";
+import { getAllowedPurchaseOrderStatuses } from "./utils/purchaseOrderUtils";
 import "./App.css";
 
 function App() {
@@ -144,24 +146,8 @@ function App() {
     }
   }
 
-  function getAllowedStatuses(currentStatus) {
-    if (currentStatus === "Open") {
-      return ["Open", "Approved"];
-    }
-
-    if (currentStatus === "Approved") {
-      return ["Approved", "Completed"];
-    }
-
-    if (currentStatus === "Completed") {
-      return ["Completed"];
-    }
-
-    return ["Open"];
-  }
-
   const canEditPurchaseOrderContent =
-    selectedPurchaseOrder?.status === "Open";
+    selectedPurchaseOrder?.status === PURCHASE_ORDER_STATUS.OPEN;
 
   return (
     <main className="container">
@@ -181,7 +167,7 @@ function App() {
           error={createError}
           submitLabel="Save Purchase Order"
           loadingLabel="Creating..."
-          allowedStatuses={["Open"]}
+          allowedStatuses={[PURCHASE_ORDER_STATUS.OPEN]}
           onFieldChange={handleNewPOChange}
           onItemChange={handleNewItemChange}
           onAddItem={addNewItem}
@@ -193,7 +179,7 @@ function App() {
       {showEditForm && (
         <PurchaseOrderForm
           title={
-            selectedPurchaseOrder?.status === "Approved"
+            selectedPurchaseOrder?.status === PURCHASE_ORDER_STATUS.APPROVED
               ? "Complete Purchase Order"
               : "Edit Purchase Order"
           }
@@ -201,13 +187,13 @@ function App() {
           loading={updateLoading}
           error={updateError}
           submitLabel={
-            selectedPurchaseOrder?.status === "Approved"
+            selectedPurchaseOrder?.status === PURCHASE_ORDER_STATUS.APPROVED
               ? "Complete Purchase Order"
               : "Update Purchase Order"
           }
           loadingLabel="Updating..."
           contentDisabled={!canEditPurchaseOrderContent}
-          allowedStatuses={getAllowedStatuses(
+          allowedStatuses={getAllowedPurchaseOrderStatuses(
             selectedPurchaseOrder?.status
           )}
           onFieldChange={handleEditPOChange}

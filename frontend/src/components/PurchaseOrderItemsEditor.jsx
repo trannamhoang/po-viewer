@@ -1,3 +1,5 @@
+import { calculatePurchaseOrderTotal } from "../utils/purchaseOrderUtils";
+
 function PurchaseOrderItemsEditor({
   items,
   disabled = false,
@@ -5,12 +7,7 @@ function PurchaseOrderItemsEditor({
   onAddItem,
   onRemoveItem,
 }) {
-  const estimatedTotal = items.reduce(
-    (total, item) =>
-      total +
-      Number(item.quantity || 0) * Number(item.unit_price || 0),
-    0
-  );
+  const estimatedTotal = calculatePurchaseOrderTotal(items);
 
   return (
     <div className="items-section">
