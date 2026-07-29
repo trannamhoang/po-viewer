@@ -1,55 +1,74 @@
-import { useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { getPurchaseOrderById } from "../services/purchaseOrderApi";
 
-export default function usePurchaseOrderDetail() {
+export default function usePurchaseOrderDetail({ onError } = {}) {
   const [selectedPurchaseOrder, setSelectedPurchaseOrder] = useState(null);
   const [detailLoading, setDetailLoading] = useState(false);
   const [detailError, setDetailError] = useState("");
 
   const requestControllerRef = useRef(null);
 
-  async function selectPurchaseOrder(purchaseOrder) {
-    if (!purchaseOrder?.id) {
-      return;
-    }
-
-    requestControllerRef.current?.abort();
-
-    const controller = new AbortController();
-    requestControllerRef.current = controller;
-
-    try {
-      setDetailLoading(true);
-      setDetailError("");
-
-      const responseData = await getPurchaseOrderById(purchaseOrder.id, {
-        signal: controller.signal,
-      });
-
-      setSelectedPurchaseOrder(responseData);
-    } catch (requestError) {
-      if (requestError.name !== "AbortError") {
-        setDetailError(requestError.message);
+  const selectPurchaseOrderById = useCallback(
+    async (purchaseOrderId) => {
+      if (!purchaseOrderId) {
+        return;
       }
-    } finally {
-      if (!controller.signal.aborted) {
-        setDetailLoading(false);
-      }
-    }
-  }
 
-  function clearSelectedPurchaseOrder() {
+      requestControllerRef.current?.abort();
+
+      const controller = new AbortController();
+      requestControllerRef.current = controller;
+
+      try {
+        setDetailLoading(true);
+        setDetailError("");
+        setSelectedPurchaseOrder(null);
+
+        const responseData = await getPurchaseOrderById(purchaseOrderId, {
+          signal: controller.signal,
+        });
+
+        setSelectedPurchaseOrder(responseData);
+      } catch (requestError) {
+        if (requestError.name !== "AbortError") {
+          setDetailError(requestError.message);
+          onError?.(requestError.message);
+        }
+      } finally {
+        if (!controller.signal.aborted) {
+          setDetailLoading(false);
+        }
+      }
+    },
+    [onError]
+  );
+
+  const selectPurchaseOrder = useCallback(
+    async (purchaseOrder) => {
+      if (!purchaseOrder?.id) {
+        return;
+      }
+
+      await selectPurchaseOrderById(purchaseOrder.id);
+    },
+    [selectPurchaseOrderById]
+  );
+
+  const clearSelectedPurchaseOrder = useCallback(() => {
     requestControllerRef.current?.abort();
 
     setSelectedPurchaseOrder(null);
     setDetailError("");
     setDetailLoading(false);
-  }
+  }, []);
 
-  function updateSelectedPurchaseOrder(purchaseOrder) {
+  const updateSelectedPurchaseOrder = useCallback((purchaseOrder) => {
+    requestControllerRef.current?.abort();
+
     setSelectedPurchaseOrder(purchaseOrder);
     setDetailError("");
-  }
+    setDetailLoading(false);
+  }, []);
 
   return {
     selectedPurchaseOrder,
@@ -57,6 +76,7 @@ export default function usePurchaseOrderDetail() {
     detailError,
 
     selectPurchaseOrder,
+    selectPurchaseOrderById,
     clearSelectedPurchaseOrder,
     updateSelectedPurchaseOrder,
   };

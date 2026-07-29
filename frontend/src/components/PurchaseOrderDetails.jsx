@@ -8,6 +8,7 @@ function PurchaseOrderDetails({
   deleteError,
   onEdit,
   onDelete,
+  onClose,
 }) {
   if (detailLoading) {
     return (
@@ -29,6 +30,12 @@ function PurchaseOrderDetails({
         <p className="error-message" role="alert">
           {detailError}
         </p>
+
+        {onClose && (
+          <button type="button" onClick={onClose}>
+            Back to purchase orders
+          </button>
+        )}
       </section>
     );
   }
@@ -50,7 +57,18 @@ function PurchaseOrderDetails({
 
   return (
     <section className="details">
-      <h2>PO Details</h2>
+      <div className="details-header">
+        <h2>PO Details</h2>
+
+        <button
+          type="button"
+          className="details-close-button"
+          onClick={onClose}
+          aria-label="Close purchase order details"
+        >
+          ×
+        </button>
+      </div>
 
       {deleteError && (
         <p className="error-message" role="alert">

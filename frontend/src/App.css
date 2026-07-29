@@ -63,8 +63,50 @@ tbody tr:hover {
   min-height: 350px;
 }
 
+.details-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.details-header h2 {
+  margin: 0;
+}
+
+.details-close-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  font-size: 1.5rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.details-close-button:hover {
+  background: rgba(15, 23, 42, 0.08);
+}
+
+.details-close-button:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 2px;
+}
+
 .detail-field {
   margin-bottom: 12px;
+}
+
+.not-found-page {
+  max-width: 720px;
+  margin: 80px auto;
+  padding: 24px;
+  text-align: center;
 }
 
 .total {

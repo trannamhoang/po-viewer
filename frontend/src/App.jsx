@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useNavigate, useParams } from "react-router";
 import ConfirmDialog from "./components/ConfirmDialog";
 import PurchaseOrderDetails from "./components/PurchaseOrderDetails";
 import PurchaseOrderFilters from "./components/PurchaseOrderFilters";
@@ -15,6 +16,9 @@ import { getAllowedPurchaseOrderStatuses } from "./utils/purchaseOrderUtils";
 import "./App.css";
 
 function App() {
+  const navigate = useNavigate();
+  const { purchaseOrderId } = useParams();
+
   const { toast, showSuccessToast, showErrorToast, hideToast } = useToast();
 
   const {
@@ -49,7 +53,7 @@ function App() {
     selectedPurchaseOrder,
     detailLoading,
     detailError,
-    selectPurchaseOrder,
+    selectPurchaseOrderById,
     clearSelectedPurchaseOrder,
     updateSelectedPurchaseOrder,
   } = usePurchaseOrderDetail();
@@ -58,6 +62,7 @@ function App() {
     updateSelectedPurchaseOrder(createdPurchaseOrder);
     resetPurchaseOrderFilters();
     refreshPurchaseOrders();
+    navigate(`/purchase-orders/${createdPurchaseOrder.id}`);
 
     showSuccessToast(
       `Purchase order ${createdPurchaseOrder.po_number} was created successfully.`
@@ -127,7 +132,7 @@ function App() {
     setDeleteError("");
     setShowDeleteConfirmation(false);
     closeAllForms();
-    selectPurchaseOrder(purchaseOrder);
+    navigate(`/purchase-orders/${purchaseOrder.id}`);
   }
 
   function requestDeletePurchaseOrder() {
@@ -165,6 +170,7 @@ function App() {
 
       clearSelectedPurchaseOrder();
       closeAllForms();
+      navigate("/purchase-orders", { replace: true });
 
       showSuccessToast(
         `Purchase order ${deletedPONumber} was deleted successfully.`
@@ -189,6 +195,34 @@ function App() {
 
   const canEditPurchaseOrderContent =
     selectedPurchaseOrder?.status === PURCHASE_ORDER_STATUS.OPEN;
+
+  useEffect(() => {
+    if (!purchaseOrderId) {
+      clearSelectedPurchaseOrder();
+      return;
+    }
+
+    if (
+      String(selectedPurchaseOrder?.id) === String(purchaseOrderId)
+    ) {
+      return;
+    }
+
+    selectPurchaseOrderById(purchaseOrderId);
+  }, [
+    purchaseOrderId,
+    selectedPurchaseOrder?.id,
+    selectPurchaseOrderById,
+    clearSelectedPurchaseOrder,
+  ]);
+
+  function closePurchaseOrderDetails() {
+    setDeleteError("");
+    setShowDeleteConfirmation(false);
+    closeAllForms();
+    clearSelectedPurchaseOrder();
+    navigate("/purchase-orders");
+  }
 
   return (
     <main className="container">
@@ -307,6 +341,7 @@ function App() {
           deleteError={deleteError}
           onEdit={openEditForm}
           onDelete={requestDeletePurchaseOrder}
+          onClose={closePurchaseOrderDetails}
         />
       </div>
     </main>
