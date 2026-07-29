@@ -21,9 +21,13 @@ function App() {
     supplier: "",
     order_date: "",
     status: "Open",
-    product: "",
-    quantity: 1,
-    unit_price: 0,
+    items: [
+      {
+        product: "",
+        quantity: 1,
+        unit_price: 0,
+      },
+    ],
   });
   const [showEditForm, setShowEditForm] = useState(false);
   const [updateLoading, setUpdateLoading] = useState(false);
@@ -35,9 +39,13 @@ function App() {
     supplier: "",
     order_date: "",
     status: "Open",
-    product: "",
-    quantity: 1,
-    unit_price: 0,
+    items: [
+      {
+        product: "",
+        quantity: 1,
+        unit_price: 0,
+      },
+    ],
   });
 
   const [deleteLoading, setDeleteLoading] = useState(false);
@@ -68,19 +76,17 @@ function App() {
       setUpdateLoading(true);
       setUpdateError("");
 
-      const requestBody = {
-        po_number: editPO.po_number,
-        supplier: editPO.supplier,
-        order_date: editPO.order_date,
-        status: editPO.status,
-        items: [
-          {
-            product: editPO.product,
-            quantity: Number(editPO.quantity),
-            unit_price: Number(editPO.unit_price),
-          },
-        ],
-      };
+    const requestBody = {
+      po_number: editPO.po_number,
+      supplier: editPO.supplier,
+      order_date: editPO.order_date,
+      status: editPO.status,
+      items: editPO.items.map((item) => ({
+        product: item.product,
+        quantity: Number(item.quantity),
+        unit_price: Number(item.unit_price),
+      })),
+    };
 
       const response = await fetch(
         `${API_URL}/purchase-orders/${editPO.id}`,
@@ -131,13 +137,11 @@ function App() {
         supplier: newPO.supplier,
         order_date: newPO.order_date,
         status: newPO.status,
-        items: [
-          {
-            product: newPO.product,
-            quantity: Number(newPO.quantity),
-            unit_price: Number(newPO.unit_price),
-          },
-        ],
+        items: newPO.items.map((item) => ({
+          product: item.product,
+          quantity: Number(item.quantity),
+          unit_price: Number(item.unit_price),
+        })),
       };
 
       const response = await fetch(`${API_URL}/purchase-orders`, {
@@ -168,9 +172,13 @@ function App() {
         supplier: "",
         order_date: "",
         status: "Open",
-        product: "",
-        quantity: 1,
-        unit_price: 0,
+        items: [
+          {
+            product: "",
+            quantity: 1,
+            unit_price: 0,
+          },
+        ],
       });
 
       setShowCreateForm(false);
@@ -242,22 +250,69 @@ function App() {
       return;
     }
 
-    const firstItem = selectedPurchaseOrder.items[0];
-
     setEditPO({
       id: selectedPurchaseOrder.id,
       po_number: selectedPurchaseOrder.po_number,
       supplier: selectedPurchaseOrder.supplier,
       order_date: selectedPurchaseOrder.order_date,
       status: selectedPurchaseOrder.status,
-      product: firstItem?.product || "",
-      quantity: firstItem?.quantity || 1,
-      unit_price: firstItem?.unit_price || 0,
+      items: selectedPurchaseOrder.items.map((item) => ({
+        product: item.product,
+        quantity: item.quantity,
+        unit_price: item.unit_price,
+      })),
     });
 
     setUpdateError("");
     setShowCreateForm(false);
     setShowEditForm(true);
+  }
+
+  function handleEditItemChange(index, event) {
+    const { name, value } = event.target;
+
+    setEditPO((currentPO) => {
+      const updatedItems = [...currentPO.items];
+
+      updatedItems[index] = {
+        ...updatedItems[index],
+        [name]: value,
+      };
+
+      return {
+        ...currentPO,
+        items: updatedItems,
+      };
+    });
+  }
+
+  function addEditItem() {
+    setEditPO((currentPO) => ({
+      ...currentPO,
+      items: [
+        ...currentPO.items,
+        {
+          product: "",
+          quantity: 1,
+          unit_price: 0,
+        },
+      ],
+    }));
+  }
+
+  function removeEditItem(index) {
+    setEditPO((currentPO) => {
+      if (currentPO.items.length === 1) {
+        return currentPO;
+      }
+
+      return {
+        ...currentPO,
+        items: currentPO.items.filter(
+          (_, itemIndex) => itemIndex !== index
+        ),
+      };
+    });
   }
 
   async function deletePurchaseOrder() {
@@ -312,6 +367,69 @@ function App() {
       setDeleteLoading(false);
     }
   }
+
+  function handleNewItemChange(index, event) {
+    const { name, value } = event.target;
+
+    setNewPO((currentPO) => {
+      const updatedItems = [...currentPO.items];
+
+      updatedItems[index] = {
+        ...updatedItems[index],
+        [name]: value,
+      };
+
+      return {
+        ...currentPO,
+        items: updatedItems,
+      };
+    });
+  }
+
+  function addNewItem() {
+    setNewPO((currentPO) => ({
+      ...currentPO,
+      items: [
+        ...currentPO.items,
+        {
+          product: "",
+          quantity: 1,
+          unit_price: 0,
+        },
+      ],
+    }));
+  }
+
+  function removeNewItem(index) {
+    setNewPO((currentPO) => {
+      if (currentPO.items.length === 1) {
+        return currentPO;
+      }
+
+      return {
+        ...currentPO,
+        items: currentPO.items.filter(
+          (_, itemIndex) => itemIndex !== index
+        ),
+      };
+    });
+  }
+
+  const newPOTotal = newPO.items.reduce(
+    (total, item) =>
+      total +
+      Number(item.quantity || 0) *
+        Number(item.unit_price || 0),
+    0
+  );
+
+  const editPOTotal = editPO.items.reduce(
+    (total, item) =>
+      total +
+      Number(item.quantity || 0) *
+        Number(item.unit_price || 0),
+    0
+  );
 
   if (loading) {
     return <main className="container">Loading purchase orders...</main>;
@@ -389,43 +507,77 @@ function App() {
                 </select>
               </label>
 
-              <label>
-                Product
-                <input
-                  type="text"
-                  name="product"
-                  value={newPO.product}
-                  onChange={handleNewPOChange}
-                  required
-                />
-              </label>
-
-              <label>
-                Quantity
-                <input
-                  type="number"
-                  name="quantity"
-                  min="1"
-                  value={newPO.quantity}
-                  onChange={handleNewPOChange}
-                  required
-                />
-              </label>
-
-              <label>
-                Unit Price
-                <input
-                  type="number"
-                  name="unit_price"
-                  min="0"
-                  step="0.01"
-                  value={newPO.unit_price}
-                  onChange={handleNewPOChange}
-                  required
-                />
-              </label>
             </div>
+            <div className="items-section">
+              <div className="items-header">
+                <h3>Items</h3>
 
+                <button
+                  type="button"
+                  onClick={addNewItem}
+                >
+                  Add Item
+                </button>
+              </div>
+
+              {newPO.items.map((item, index) => (
+                <div className="item-row" key={index}>
+                  <label>
+                    Product
+                    <input
+                      type="text"
+                      name="product"
+                      value={item.product}
+                      onChange={(event) =>
+                        handleNewItemChange(index, event)
+                      }
+                      required
+                    />
+                  </label>
+
+                  <label>
+                    Quantity
+                    <input
+                      type="number"
+                      name="quantity"
+                      min="1"
+                      value={item.quantity}
+                      onChange={(event) =>
+                        handleNewItemChange(index, event)
+                      }
+                      required
+                    />
+                  </label>
+
+                  <label>
+                    Unit Price
+                    <input
+                      type="number"
+                      name="unit_price"
+                      min="0"
+                      step="0.01"
+                      value={item.unit_price}
+                      onChange={(event) =>
+                        handleNewItemChange(index, event)
+                      }
+                      required
+                    />
+                  </label>
+
+                  <button
+                    type="button"
+                    className="remove-item-button"
+                    onClick={() => removeNewItem(index)}
+                    disabled={newPO.items.length === 1}
+                  >
+                    Remove
+                  </button>
+                </div>
+              ))}
+            </div>
+            <p className="form-total">
+              Estimated total: ${newPOTotal.toLocaleString()}
+            </p>
             <button type="submit" disabled={createLoading}>
               {createLoading ? "Creating..." : "Save Purchase Order"}
             </button>
@@ -488,43 +640,79 @@ function App() {
                 </select>
               </label>
 
-              <label>
-                Product
-                <input
-                  type="text"
-                  name="product"
-                  value={editPO.product}
-                  onChange={handleEditPOChange}
-                  required
-                />
-              </label>
-
-              <label>
-                Quantity
-                <input
-                  type="number"
-                  name="quantity"
-                  min="1"
-                  value={editPO.quantity}
-                  onChange={handleEditPOChange}
-                  required
-                />
-              </label>
-
-              <label>
-                Unit Price
-                <input
-                  type="number"
-                  name="unit_price"
-                  min="0"
-                  step="0.01"
-                  value={editPO.unit_price}
-                  onChange={handleEditPOChange}
-                  required
-                />
-              </label>
+              
             </div>
 
+            <div className="items-section">
+              <div className="items-header">
+                <h3>Items</h3>
+
+                <button
+                  type="button"
+                  onClick={addEditItem}
+                >
+                  Add Item
+                </button>
+              </div>
+
+              {editPO.items.map((item, index) => (
+                <div className="item-row" key={index}>
+                  <label>
+                    Product
+                    <input
+                      type="text"
+                      name="product"
+                      value={item.product}
+                      onChange={(event) =>
+                        handleEditItemChange(index, event)
+                      }
+                      required
+                    />
+                  </label>
+
+                  <label>
+                    Quantity
+                    <input
+                      type="number"
+                      name="quantity"
+                      min="1"
+                      value={item.quantity}
+                      onChange={(event) =>
+                        handleEditItemChange(index, event)
+                      }
+                      required
+                    />
+                  </label>
+
+                  <label>
+                    Unit Price
+                    <input
+                      type="number"
+                      name="unit_price"
+                      min="0"
+                      step="0.01"
+                      value={item.unit_price}
+                      onChange={(event) =>
+                        handleEditItemChange(index, event)
+                      }
+                      required
+                    />
+                  </label>
+
+                  <button
+                    type="button"
+                    className="remove-item-button"
+                    onClick={() => removeEditItem(index)}
+                    disabled={editPO.items.length === 1}
+                  >
+                    Remove
+                  </button>
+                </div>
+              ))}
+            </div>
+            <p className="form-total">
+              Estimated total: ${editPOTotal.toLocaleString()}
+            </p>
             <div className="form-actions">
               <button
                 type="submit"

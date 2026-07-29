@@ -200,3 +200,55 @@ button:disabled {
 .delete-button:hover {
   background: #a61f1f;
 }
+
+.items-section {
+  margin-bottom: 24px;
+}
+
+.items-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.item-row {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr auto;
+  gap: 12px;
+  align-items: end;
+  margin-bottom: 12px;
+  padding: 16px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+}
+
+.item-row label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-weight: bold;
+}
+
+.item-row input {
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.remove-item-button {
+  background: #c62828;
+  color: white;
+}
+
+.form-total {
+  margin-top: 16px;
+  font-size: 18px;
+  font-weight: bold;
+}
+
+@media (max-width: 800px) {
+  .item-row {
+    grid-template-columns: 1fr;
+  }
+}
