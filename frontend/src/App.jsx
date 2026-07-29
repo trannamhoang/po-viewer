@@ -9,6 +9,8 @@ function App() {
   const [selectedPurchaseOrder, setSelectedPurchaseOrder] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [searchText, setSearchText] = useState("");
+  const [statusFilter, setStatusFilter] = useState("All");
 
   useEffect(() => {
     fetch(`${API_URL}/purchase-orders`)
@@ -33,6 +35,19 @@ function App() {
     setSelectedPurchaseOrder(purchaseOrder);
   }
 
+  const filteredPurchaseOrders = purchaseOrders.filter((po) => {
+    const keyword = searchText.toLowerCase();
+
+    const matchesSearch =
+      po.po_number.toLowerCase().includes(keyword) ||
+      po.supplier.toLowerCase().includes(keyword);
+
+    const matchesStatus =
+      statusFilter === "All" || po.status === statusFilter;
+
+    return matchesSearch && matchesStatus;
+  });
+
   if (loading) {
     return <main className="container">Loading purchase orders...</main>;
   }
@@ -48,7 +63,24 @@ function App() {
       <div className="layout">
         <section>
           <h2>Purchase Orders</h2>
+          <div className="filters">
+            <input
+              type="text"
+              placeholder="Search by PO number or supplier..."
+              value={searchText}
+              onChange={(event) => setSearchText(event.target.value)}
+            />
 
+            <select
+              value={statusFilter}
+              onChange={(event) => setStatusFilter(event.target.value)}
+            >
+              <option value="All">All statuses</option>
+              <option value="Open">Open</option>
+              <option value="Approved">Approved</option>
+              <option value="Completed">Completed</option>
+            </select>
+          </div>
           <table>
             <thead>
               <tr>
@@ -60,7 +92,7 @@ function App() {
             </thead>
 
             <tbody>
-              {purchaseOrders.map((purchaseOrder) => (
+              {filteredPurchaseOrders.map((purchaseOrder) => (
                 <tr
                   key={purchaseOrder.id}
                   onClick={() => selectPurchaseOrder(purchaseOrder)}
@@ -73,6 +105,11 @@ function App() {
               ))}
             </tbody>
           </table>
+          {filteredPurchaseOrders.length === 0 && (
+            <p className="empty-message">
+              No purchase orders found.
+            </p>
+          )}
         </section>
 
         <section className="details">

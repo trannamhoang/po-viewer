@@ -66,3 +66,41 @@ tbody tr:hover {
     grid-template-columns: 1fr;
   }
 }
+
+.filters {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.filters input,
+.filters select {
+  padding: 10px 12px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.filters input {
+  flex: 1;
+}
+
+.filters select {
+  min-width: 160px;
+}
+
+.empty-message {
+  margin-top: 20px;
+  color: #666;
+  text-align: center;
+}
+
+@media (max-width: 600px) {
+  .filters {
+    flex-direction: column;
+  }
+
+  .filters select {
+    width: 100%;
+  }
+}
