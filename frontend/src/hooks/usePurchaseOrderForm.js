@@ -15,6 +15,7 @@ export default function usePurchaseOrderForm({
   selectedPurchaseOrder,
   onCreated,
   onUpdated,
+  onError,
 }) {
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [showEditForm, setShowEditForm] = useState(false);
@@ -239,6 +240,7 @@ export default function usePurchaseOrderForm({
       await onCreated?.(createdPurchaseOrder);
     } catch (requestError) {
       setCreateError(requestError.message);
+      onError?.(requestError.message);
     } finally {
       setCreateLoading(false);
     }
@@ -275,6 +277,7 @@ export default function usePurchaseOrderForm({
       await onUpdated?.(updatedPurchaseOrder);
     } catch (requestError) {
       setUpdateError(requestError.message);
+      onError?.(requestError.message);
     } finally {
       setUpdateLoading(false);
     }

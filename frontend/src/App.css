@@ -336,3 +336,140 @@ select[aria-invalid="true"]:focus {
   color: #666;
   font-size: 13px;
 }
+
+.toast {
+  position: fixed;
+  top: 24px;
+  right: 24px;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  width: min(420px, calc(100vw - 48px));
+  padding: 14px 16px;
+  border: 1px solid;
+  border-radius: 8px;
+  background: white;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+  animation: toast-enter 180ms ease-out;
+}
+
+.toast-success {
+  color: #166534;
+  border-color: #86efac;
+  background: #f0fdf4;
+}
+
+.toast-error {
+  color: #991b1b;
+  border-color: #fca5a5;
+  background: #fef2f2;
+}
+
+.toast-close-button {
+  margin-left: auto;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font-size: 1.4rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.toast-close-button:hover {
+  opacity: 0.7;
+}
+
+.toast-close-button:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 3px;
+}
+
+@keyframes toast-enter {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 600px) {
+  .toast {
+    top: 12px;
+    right: 12px;
+    left: 12px;
+    width: auto;
+  }
+}
+
+.dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 900;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(15, 23, 42, 0.55);
+}
+
+.confirm-dialog {
+  width: min(460px, 100%);
+  padding: 24px;
+  border-radius: 12px;
+  background: white;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.25);
+  animation: dialog-enter 160ms ease-out;
+}
+
+.confirm-dialog h2 {
+  margin-top: 0;
+  margin-bottom: 12px;
+}
+
+.confirm-dialog p {
+  margin-bottom: 24px;
+  line-height: 1.5;
+}
+
+.dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+@keyframes dialog-enter {
+  from {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@media (max-width: 600px) {
+  .dialog-backdrop {
+    align-items: flex-end;
+    padding: 12px;
+  }
+
+  .confirm-dialog {
+    width: 100%;
+  }
+
+  .dialog-actions {
+    flex-direction: column-reverse;
+  }
+
+  .dialog-actions button {
+    width: 100%;
+  }
+}
