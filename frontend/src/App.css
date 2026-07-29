@@ -169,12 +169,6 @@ button:disabled {
   }
 }
 
-.detail-actions {
-  display: flex;
-  justify-content: flex-end;
-  margin-bottom: 16px;
-}
-
 .form-actions {
   display: flex;
   gap: 12px;

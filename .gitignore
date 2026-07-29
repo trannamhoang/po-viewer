@@ -25,5 +25,5 @@ frontend/dist/
 Thumbs.db
 
 # SQLite database
-backend/po_viewer.db
-backend/po_viewer.db-journal
+backend/*.db
+backend/*.db-journal

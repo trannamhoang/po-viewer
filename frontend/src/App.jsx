@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import "./App.css";
+import Pagination from "./components/Pagination";
 
 const API_URL =
   import.meta.env.VITE_API_URL || "http://127.0.0.1:8000";
@@ -656,6 +657,7 @@ function App() {
                   name="po_number"
                   value={editPO.po_number}
                   onChange={handleEditPOChange}
+                  disabled={!canEditPurchaseOrderContent}
                   required
                 />
               </label>
@@ -711,6 +713,7 @@ function App() {
                 <button
                   type="button"
                   onClick={addEditItem}
+                  disabled={!canEditPurchaseOrderContent}
                 >
                   Add Item
                 </button>
@@ -897,41 +900,19 @@ function App() {
               ))}
             </tbody>
           </table>
-          {!error && totalItems > 0 && (
-            <>
-              <div className="pagination">
-                <button
-                  type="button"
-                  onClick={() =>
-                    setCurrentPage((page) => page - 1)
-                  }
-                  disabled={loading || currentPage <= 1}
-                >
-                  Previous
-                </button>
-
-                <span>
-                  Page {currentPage} of {totalPages}
-                </span>
-
-                <button
-                  type="button"
-                  onClick={() =>
-                    setCurrentPage((page) => page + 1)
-                  }
-                  disabled={
-                    loading || currentPage >= totalPages
-                  }
-                >
-                  Next
-                </button>
-              </div>
-
-              <p className="pagination-summary">
-                {totalItems} purchase order
-                {totalItems === 1 ? "" : "s"} found
-              </p>
-            </>
+          {!error && (
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              totalItems={totalItems}
+              loading={loading}
+              onPrevious={() =>
+                setCurrentPage((page) => page - 1)
+              }
+              onNext={() =>
+                setCurrentPage((page) => page + 1)
+              }
+            />
           )}
 
           {!loading && !error && totalItems === 0 && (
