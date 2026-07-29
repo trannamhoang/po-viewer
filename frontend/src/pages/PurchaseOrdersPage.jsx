@@ -205,7 +205,7 @@ function PurchaseOrdersPage() {
   }
 
   return (
-    <main className="container">
+    <section className="purchase-orders-page">
       <Toast
         message={toast.message}
         type={toast.type}
@@ -227,14 +227,20 @@ function PurchaseOrdersPage() {
         onCancel={cancelDeletePurchaseOrder}
       />
 
-      <h1>Purchase Order App</h1>
-      <button
-        type="button"
-        onClick={toggleCreateForm}
-        disabled={createLoading || updateLoading}
-      >
-        {showCreateForm ? "Cancel" : "Create PO"}
-      </button>
+      <div className="page-header">
+        <div>
+          <h2>Purchase Orders</h2>
+          <p>Create, review and manage purchase orders.</p>
+        </div>
+
+        <button
+          type="button"
+          onClick={toggleCreateForm}
+          disabled={createLoading || updateLoading}
+        >
+          {showCreateForm ? "Cancel" : "Create PO"}
+        </button>
+      </div>
 
       {showCreateForm && (
         <PurchaseOrderForm
@@ -287,8 +293,6 @@ function PurchaseOrdersPage() {
 
       <div className="layout">
         <section aria-busy={loading}>
-          <h2>Purchase Orders</h2>
-
           <PurchaseOrderFilters
             searchText={searchText}
             isSearchWaiting={isSearchWaiting}
@@ -325,7 +329,7 @@ function PurchaseOrdersPage() {
           onClose={closePurchaseOrderDetails}
         />
       </div>
-    </main>
+    </section>
   );
 }
 

@@ -9,6 +9,62 @@ body {
   color: #222;
 }
 
+.application-shell {
+  min-height: 100vh;
+  background: #f8fafc;
+}
+
+.application-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 32px;
+  padding: 20px 32px;
+  border-bottom: 1px solid #e2e8f0;
+  background: white;
+}
+
+.application-brand h1 {
+  margin: 0;
+  font-size: 1.4rem;
+}
+
+.application-brand p {
+  margin: 4px 0 0;
+  color: #64748b;
+  font-size: 0.9rem;
+}
+
+.application-navigation {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.navigation-link {
+  padding: 10px 14px;
+  border-radius: 8px;
+  color: #475569;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.navigation-link:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+}
+
+.navigation-link.active {
+  background: #e0e7ff;
+  color: #3730a3;
+}
+
+.application-content {
+  width: min(1400px, 100%);
+  margin: 0 auto;
+  padding: 32px;
+}
+
 .container {
   max-width: 1200px;
   margin: 0 auto;
@@ -163,8 +219,56 @@ tbody tr:hover {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
+  gap: 24px;
   margin-bottom: 24px;
+}
+
+.page-header h2 {
+  margin: 0;
+}
+
+.page-header p {
+  margin: 6px 0 0;
+  color: #64748b;
+}
+
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 20px;
+}
+
+.summary-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 24px;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  background: white;
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.06);
+}
+
+.summary-label {
+  color: #64748b;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.summary-value {
+  color: #0f172a;
+  font-size: 2rem;
+}
+
+@media (max-width: 900px) {
+  .dashboard-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .application-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
 }
 
 button {
@@ -214,11 +318,30 @@ button:disabled {
 
 @media (max-width: 600px) {
   .page-header {
-    align-items: flex-start;
+    align-items: stretch;
     flex-direction: column;
   }
 
   .form-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 600px) {
+  .application-content {
+    padding: 20px 16px;
+  }
+
+  .application-navigation {
+    width: 100%;
+  }
+
+  .navigation-link {
+    flex: 1;
+    text-align: center;
+  }
+
+  .dashboard-grid {
     grid-template-columns: 1fr;
   }
 }
