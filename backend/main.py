@@ -1,5 +1,7 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
+from typing import List
 
 app = FastAPI(title="PO Viewer API")
 
@@ -12,6 +14,19 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+class PurchaseOrderItem(BaseModel):
+    product: str
+    quantity: int
+    unit_price: float
+
+
+class PurchaseOrderCreate(BaseModel):
+    po_number: str
+    supplier: str
+    order_date: str
+    status: str
+    items: List[PurchaseOrderItem]
 
 purchase_orders = [
     {
@@ -97,3 +112,40 @@ def get_purchase_order(po_id: int):
         status_code=404,
         detail="Purchase order not found",
     )
+
+@app.post("/purchase-orders", status_code=201)
+def create_purchase_order(new_po: PurchaseOrderCreate):
+    if any(
+        po["po_number"].lower() == new_po.po_number.lower()
+        for po in purchase_orders
+    ):
+        raise HTTPException(
+            status_code=400,
+            detail="PO number already exists",
+        )
+
+    new_id = max(
+        [po["id"] for po in purchase_orders],
+        default=0,
+    ) + 1
+
+    items = [item.model_dump() for item in new_po.items]
+
+    total_amount = sum(
+        item["quantity"] * item["unit_price"]
+        for item in items
+    )
+
+    created_po = {
+        "id": new_id,
+        "po_number": new_po.po_number,
+        "supplier": new_po.supplier,
+        "order_date": new_po.order_date,
+        "status": new_po.status,
+        "total_amount": total_amount,
+        "items": items,
+    }
+
+    purchase_orders.append(created_po)
+
+    return created_po
