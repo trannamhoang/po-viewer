@@ -51,6 +51,14 @@ tbody tr:hover {
   background: #f0f4ff;
 }
 
+.selected-row {
+  background: #e8f0fe;
+}
+
+.selected-row:hover {
+  background: #dce8fc;
+}
+
 .details {
   min-height: 350px;
 }

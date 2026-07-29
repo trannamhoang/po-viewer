@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import Pagination from "./components/Pagination";
 import PurchaseOrderFilters from "./components/PurchaseOrderFilters";
+import PurchaseOrderList from "./components/PurchaseOrderList";
 import "./App.css";
 
 const API_URL =
@@ -825,68 +825,24 @@ function App() {
             }}
           />
 
-          {loading && (
-            <p className="loading-message" role="status">
-              Loading purchase orders...
-            </p>
-          )}
-
-          {error && (
-            <p className="error-message" role="alert">
-              Error: {error}
-            </p>
-          )}
-
-          <table>
-            <thead>
-              <tr>
-                <th>PO Number</th>
-                <th>Supplier</th>
-                <th>Status</th>
-                <th>Total</th>
-              </tr>
-            </thead>
-
-            <tbody>
-              {purchaseOrders.map((purchaseOrder) => (
-                <tr
-                  key={purchaseOrder.id}
-                  onClick={() => selectPurchaseOrder(purchaseOrder)}
-                >
-                  <td>{purchaseOrder.po_number}</td>
-                  <td>{purchaseOrder.supplier}</td>
-                  <td>
-                    <span
-                      className={`status-badge status-${purchaseOrder.status.toLowerCase()}`}
-                    >
-                      {purchaseOrder.status}
-                    </span>
-                  </td>
-                  <td>${purchaseOrder.total_amount.toLocaleString()}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          {!error && (
-            <Pagination
-              currentPage={currentPage}
-              totalPages={totalPages}
-              totalItems={totalItems}
-              loading={loading}
-              onPrevious={() =>
-                setCurrentPage((page) => page - 1)
-              }
-              onNext={() =>
-                setCurrentPage((page) => page + 1)
-              }
-            />
-          )}
-
-          {!loading && !error && totalItems === 0 && (
-            <p className="empty-message">
-              No purchase orders found.
-            </p>
-          )}
+          <PurchaseOrderList
+            purchaseOrders={purchaseOrders}
+            loading={loading}
+            error={error}
+            totalItems={totalItems}
+            currentPage={currentPage}
+            totalPages={totalPages}
+            selectedPurchaseOrderId={
+              selectedPurchaseOrder?.id ?? null
+            }
+            onSelectPurchaseOrder={selectPurchaseOrder}
+            onPreviousPage={() =>
+              setCurrentPage((page) => page - 1)
+            }
+            onNextPage={() =>
+              setCurrentPage((page) => page + 1)
+            }
+          />
         </section>
 
         <section className="details">
