@@ -4,12 +4,9 @@ import PurchaseOrderFilters from "./components/PurchaseOrderFilters";
 import PurchaseOrderForm from "./components/PurchaseOrderForm";
 import PurchaseOrderList from "./components/PurchaseOrderList";
 import usePurchaseOrderDetail from "./hooks/usePurchaseOrderDetail";
+import usePurchaseOrderForm from "./hooks/usePurchaseOrderForm";
 import usePurchaseOrders from "./hooks/usePurchaseOrders";
-import {
-  createPurchaseOrder as createPurchaseOrderApi,
-  deletePurchaseOrder as deletePurchaseOrderApi,
-  updatePurchaseOrder as updatePurchaseOrderApi,
-} from "./services/purchaseOrderApi";
+import { deletePurchaseOrder as deletePurchaseOrderApi } from "./services/purchaseOrderApi";
 import "./App.css";
 
 function App() {
@@ -50,216 +47,63 @@ function App() {
     updateSelectedPurchaseOrder,
   } = usePurchaseOrderDetail();
 
-  const [showCreateForm, setShowCreateForm] = useState(false);
-  const [createLoading, setCreateLoading] = useState(false);
-  const [createError, setCreateError] = useState("");
-  const [newPO, setNewPO] = useState({
-    po_number: "",
-    supplier: "",
-    order_date: "",
-    status: "Open",
-    items: [
-      {
-        product: "",
-        quantity: 1,
-        unit_price: 0,
-      },
-    ],
-  });
-  const [showEditForm, setShowEditForm] = useState(false);
-  const [updateLoading, setUpdateLoading] = useState(false);
-  const [updateError, setUpdateError] = useState("");
+  async function handlePurchaseOrderCreated(createdPurchaseOrder) {
+    updateSelectedPurchaseOrder(createdPurchaseOrder);
+    resetPurchaseOrderFilters();
+    refreshPurchaseOrders();
+  }
 
-  const [editPO, setEditPO] = useState({
-    id: null,
-    po_number: "",
-    supplier: "",
-    order_date: "",
-    status: "Open",
-    items: [
-      {
-        product: "",
-        quantity: 1,
-        unit_price: 0,
-      },
-    ],
+  async function handlePurchaseOrderUpdated(updatedPurchaseOrder) {
+    updateSelectedPurchaseOrder(updatedPurchaseOrder);
+    refreshPurchaseOrders();
+  }
+
+  const {
+    showCreateForm,
+    showEditForm,
+
+    createLoading,
+    updateLoading,
+
+    createError,
+    updateError,
+
+    newPO,
+    editPO,
+
+    toggleCreateForm,
+    closeCreateForm,
+    openEditForm,
+    closeEditForm,
+    closeAllForms,
+
+    handleNewPOChange,
+    handleEditPOChange,
+
+    handleNewItemChange,
+    handleEditItemChange,
+
+    addNewItem,
+    addEditItem,
+
+    removeNewItem,
+    removeEditItem,
+
+    createPurchaseOrder,
+    updatePurchaseOrder,
+  } = usePurchaseOrderForm({
+    selectedPurchaseOrder,
+    onCreated: handlePurchaseOrderCreated,
+    onUpdated: handlePurchaseOrderUpdated,
   });
 
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [deleteError, setDeleteError] = useState("");
 
-  function handleNewPOChange(event) {
-    const { name, value } = event.target;
-
-    setNewPO((currentPO) => ({
-      ...currentPO,
-      [name]: value,
-    }));
-  }
-
-  function handleEditPOChange(event) {
-    const { name, value } = event.target;
-
-    setEditPO((currentPO) => ({
-      ...currentPO,
-      [name]: value,
-    }));
-  }
-
-  async function updatePurchaseOrder(event) {
-    event.preventDefault();
-
-    try {
-      setUpdateLoading(true);
-      setUpdateError("");
-
-      const requestBody = {
-        po_number: editPO.po_number,
-        supplier: editPO.supplier,
-        order_date: editPO.order_date,
-        status: editPO.status,
-        items: editPO.items.map((item) => ({
-          product: item.product,
-          quantity: Number(item.quantity),
-          unit_price: Number(item.unit_price),
-        })),
-      };
-
-      const responseData = await updatePurchaseOrderApi(
-        editPO.id,
-        requestBody
-      );
-
-      updateSelectedPurchaseOrder(responseData);
-      refreshPurchaseOrders();
-      setShowEditForm(false);
-    } catch (error) {
-      setUpdateError(error.message);
-    } finally {
-      setUpdateLoading(false);
-    }
-  }
-
-  async function createPurchaseOrder(event) {
-    event.preventDefault();
-
-    try {
-      setCreateLoading(true);
-      setCreateError("");
-
-      const requestBody = {
-        po_number: newPO.po_number,
-        supplier: newPO.supplier,
-        order_date: newPO.order_date,
-        status: newPO.status,
-        items: newPO.items.map((item) => ({
-          product: item.product,
-          quantity: Number(item.quantity),
-          unit_price: Number(item.unit_price),
-        })),
-      };
-
-      const responseData = await createPurchaseOrderApi(requestBody);
-
-      updateSelectedPurchaseOrder(responseData);
-      resetPurchaseOrderFilters();
-      refreshPurchaseOrders();
-
-      setNewPO({
-        po_number: "",
-        supplier: "",
-        order_date: "",
-        status: "Open",
-        items: [
-          {
-            product: "",
-            quantity: 1,
-            unit_price: 0,
-          },
-        ],
-      });
-
-      setShowCreateForm(false);
-    } catch (error) {
-      setCreateError(error.message);
-    } finally {
-      setCreateLoading(false);
-    }
-  }
-
   function handleSelectPurchaseOrder(purchaseOrder) {
     setDeleteError("");
+    closeAllForms();
     selectPurchaseOrder(purchaseOrder);
-  }
-
-  function openEditForm() {
-    if (!selectedPurchaseOrder) {
-      return;
-    }
-
-    setEditPO({
-      id: selectedPurchaseOrder.id,
-      po_number: selectedPurchaseOrder.po_number,
-      supplier: selectedPurchaseOrder.supplier,
-      order_date: selectedPurchaseOrder.order_date,
-      status: selectedPurchaseOrder.status,
-      items: selectedPurchaseOrder.items.map((item) => ({
-        product: item.product,
-        quantity: item.quantity,
-        unit_price: item.unit_price,
-      })),
-    });
-
-    setUpdateError("");
-    setShowCreateForm(false);
-    setShowEditForm(true);
-  }
-
-  function handleEditItemChange(index, event) {
-    const { name, value } = event.target;
-
-    setEditPO((currentPO) => {
-      const updatedItems = [...currentPO.items];
-
-      updatedItems[index] = {
-        ...updatedItems[index],
-        [name]: value,
-      };
-
-      return {
-        ...currentPO,
-        items: updatedItems,
-      };
-    });
-  }
-
-  function addEditItem() {
-    setEditPO((currentPO) => ({
-      ...currentPO,
-      items: [
-        ...currentPO.items,
-        {
-          product: "",
-          quantity: 1,
-          unit_price: 0,
-        },
-      ],
-    }));
-  }
-
-  function removeEditItem(index) {
-    setEditPO((currentPO) => {
-      if (currentPO.items.length === 1) {
-        return currentPO;
-      }
-
-      return {
-        ...currentPO,
-        items: currentPO.items.filter(
-          (_, itemIndex) => itemIndex !== index
-        ),
-      };
-    });
   }
 
   async function deletePurchaseOrder() {
@@ -282,7 +126,7 @@ function App() {
       await deletePurchaseOrderApi(selectedPurchaseOrder.id);
 
       clearSelectedPurchaseOrder();
-      setShowEditForm(false);
+      closeAllForms();
 
       const shouldGoToPreviousPage =
         purchaseOrders.length === 1 &&
@@ -298,53 +142,6 @@ function App() {
     } finally {
       setDeleteLoading(false);
     }
-  }
-
-  function handleNewItemChange(index, event) {
-    const { name, value } = event.target;
-
-    setNewPO((currentPO) => {
-      const updatedItems = [...currentPO.items];
-
-      updatedItems[index] = {
-        ...updatedItems[index],
-        [name]: value,
-      };
-
-      return {
-        ...currentPO,
-        items: updatedItems,
-      };
-    });
-  }
-
-  function addNewItem() {
-    setNewPO((currentPO) => ({
-      ...currentPO,
-      items: [
-        ...currentPO.items,
-        {
-          product: "",
-          quantity: 1,
-          unit_price: 0,
-        },
-      ],
-    }));
-  }
-
-  function removeNewItem(index) {
-    setNewPO((currentPO) => {
-      if (currentPO.items.length === 1) {
-        return currentPO;
-      }
-
-      return {
-        ...currentPO,
-        items: currentPO.items.filter(
-          (_, itemIndex) => itemIndex !== index
-        ),
-      };
-    });
   }
 
   function getAllowedStatuses(currentStatus) {
@@ -371,10 +168,8 @@ function App() {
       <h1>Purchase Order App</h1>
       <button
         type="button"
-        onClick={() => {
-          setShowCreateForm((currentValue) => !currentValue);
-          setShowEditForm(false);
-        }}
+        onClick={toggleCreateForm}
+        disabled={createLoading || updateLoading}
       >
         {showCreateForm ? "Cancel" : "Create PO"}
       </button>
@@ -392,7 +187,7 @@ function App() {
           onAddItem={addNewItem}
           onRemoveItem={removeNewItem}
           onSubmit={createPurchaseOrder}
-          onCancel={() => setShowCreateForm(false)}
+          onCancel={closeCreateForm}
         />
       )}
       {showEditForm && (
@@ -420,7 +215,7 @@ function App() {
           onAddItem={addEditItem}
           onRemoveItem={removeEditItem}
           onSubmit={updatePurchaseOrder}
-          onCancel={() => setShowEditForm(false)}
+          onCancel={closeEditForm}
         />
       )}
       <div className="layout">
