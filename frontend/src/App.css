@@ -295,3 +295,20 @@ button:disabled {
   color: #666;
   text-align: center;
 }
+
+.search-box {
+  display: flex;
+  flex: 1;
+  gap: 8px;
+}
+
+.search-box input {
+  flex: 1;
+}
+
+.search-status {
+  display: block;
+  margin-top: 6px;
+  color: #666;
+  font-size: 13px;
+}

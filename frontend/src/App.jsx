@@ -12,6 +12,8 @@ function App() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [searchText, setSearchText] = useState("");
+  const [debouncedSearchText, setDebouncedSearchText] =
+    useState("");
   const [statusFilter, setStatusFilter] = useState("All");
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [createLoading, setCreateLoading] = useState(false);
@@ -54,6 +56,18 @@ function App() {
   const [pageSize, setPageSize] = useState(5);
   const [totalItems, setTotalItems] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchText(searchText);
+      setCurrentPage(1);
+    }, 500);
+
+    return () => {
+      clearTimeout(timer);
+    };
+  }, [searchText]);
 
   function handleNewPOChange(event) {
     const { name, value } = event.target;
@@ -113,8 +127,8 @@ function App() {
       }
 
       setSelectedPurchaseOrder(responseData);
+      setRefreshKey((currentValue) => currentValue + 1);
       setShowEditForm(false);
-      await loadPurchaseOrders();
     } catch (error) {
       setUpdateError(error.message);
     } finally {
@@ -158,10 +172,12 @@ function App() {
       }
 
       setSelectedPurchaseOrder(responseData);
+      setRefreshKey((currentValue) => currentValue + 1);
 
       setCurrentPage(1);
       setSearchText("");
       setStatusFilter("All");
+      setDebouncedSearchText("");
 
       setNewPO({
         po_number: "",
@@ -185,47 +201,71 @@ function App() {
     }
   }
 
-  async function loadPurchaseOrders() {
-    try {
-      setLoading(true);
-      setError("");
-
-      const queryParameters = new URLSearchParams({
-        page: String(currentPage),
-        page_size: String(pageSize),
-      });
-
-      if (searchText.trim()) {
-        queryParameters.set("search", searchText.trim());
-      }
-
-      if (statusFilter !== "All") {
-        queryParameters.set("status", statusFilter);
-      }
-
-      const response = await fetch(
-        `${API_URL}/purchase-orders?${queryParameters.toString()}`
-      );
-
-      if (!response.ok) {
-        throw new Error("Could not load purchase orders");
-      }
-
-      const responseData = await response.json();
-
-      setPurchaseOrders(responseData.items);
-      setTotalItems(responseData.total_items);
-      setTotalPages(responseData.total_pages);
-    } catch (fetchError) {
-      setError(fetchError.message);
-    } finally {
-      setLoading(false);
-    }
-  }
-
   useEffect(() => {
+    const controller = new AbortController();
+
+    async function loadPurchaseOrders() {
+      try {
+        setLoading(true);
+        setError("");
+
+        const queryParameters = new URLSearchParams({
+          page: String(currentPage),
+          page_size: String(pageSize),
+        });
+
+        if (debouncedSearchText.trim()) {
+          queryParameters.set(
+            "search",
+            debouncedSearchText.trim()
+          );
+        }
+
+        if (statusFilter !== "All") {
+          queryParameters.set("status", statusFilter);
+        }
+
+        const response = await fetch(
+          `${API_URL}/purchase-orders?${queryParameters.toString()}`,
+          {
+            signal: controller.signal,
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error(
+            "Could not load purchase orders"
+          );
+        }
+
+        const responseData = await response.json();
+
+        setPurchaseOrders(responseData.items);
+        setTotalItems(responseData.total_items);
+        setTotalPages(responseData.total_pages);
+      } catch (fetchError) {
+        if (fetchError.name !== "AbortError") {
+          setError(fetchError.message);
+        }
+      } finally {
+        if (!controller.signal.aborted) {
+          setLoading(false);
+        }
+      }
+    }
+
     loadPurchaseOrders();
-  }, [currentPage, pageSize, searchText, statusFilter]);
+
+    return () => {
+      controller.abort();
+    };
+  }, [
+    currentPage,
+    pageSize,
+    debouncedSearchText,
+    refreshKey,
+    statusFilter,
+  ]);
 
   async function selectPurchaseOrder(purchaseOrder) {
     try {
@@ -358,8 +398,6 @@ function App() {
         throw new Error(errorMessage);
       }
 
-
-
       setSelectedPurchaseOrder(null);
       setShowEditForm(false);
 
@@ -370,7 +408,7 @@ function App() {
       if (shouldGoToPreviousPage) {
         setCurrentPage((page) => page - 1);
       } else {
-        await loadPurchaseOrders();
+        setRefreshKey((currentValue) => currentValue + 1);
       }
     } catch (error) {
       setDeleteError(error.message);
@@ -457,13 +495,8 @@ function App() {
   const canEditPurchaseOrderContent =
     selectedPurchaseOrder?.status === "Open";
 
-  if (loading) {
-    return <main className="container">Loading purchase orders...</main>;
-  }
-
-  if (error) {
-    return <main className="container">Error: {error}</main>;
-  }
+  const isSearchWaiting =
+    searchText !== debouncedSearchText;
 
   return (
     <main className="container">
@@ -768,18 +801,34 @@ function App() {
         </section>
       )}
       <div className="layout">
-        <section>
+        <section aria-busy={loading}>
           <h2>Purchase Orders</h2>
           <div className="filters">
-            <input
-              type="text"
-              placeholder="Search by PO number or supplier..."
-              value={searchText}
-              onChange={(event) => {
-                setSearchText(event.target.value);
-                setCurrentPage(1);
-              }}
-            />
+            <div className="search-box">
+              <input
+                type="text"
+                placeholder="Search by PO number or supplier..."
+                value={searchText}
+                onChange={(event) =>
+                  setSearchText(event.target.value)
+                }
+              />
+
+              {isSearchWaiting && (
+                <span className="search-status">
+                  Waiting to search...
+                </span>
+              )}
+
+              {searchText && (
+                <button
+                  type="button"
+                  onClick={() => setSearchText("")}
+                >
+                  Clear
+                </button>
+              )}
+            </div>
 
             <select
               value={statusFilter}
@@ -805,6 +854,19 @@ function App() {
               <option value={20}>20 per page</option>
             </select>
           </div>
+
+          {loading && (
+            <p className="loading-message" role="status">
+              Loading purchase orders...
+            </p>
+          )}
+
+          {error && (
+            <p className="error-message" role="alert">
+              Error: {error}
+            </p>
+          )}
+
           <table>
             <thead>
               <tr>
@@ -835,40 +897,44 @@ function App() {
               ))}
             </tbody>
           </table>
-          <div className="pagination">
-            <button
-              type="button"
-              onClick={() =>
-                setCurrentPage((page) => page - 1)
-              }
-              disabled={currentPage <= 1}
-            >
-              Previous
-            </button>
+          {!error && totalItems > 0 && (
+            <>
+              <div className="pagination">
+                <button
+                  type="button"
+                  onClick={() =>
+                    setCurrentPage((page) => page - 1)
+                  }
+                  disabled={loading || currentPage <= 1}
+                >
+                  Previous
+                </button>
 
-            <span>
-              Page {currentPage} of {totalPages || 1}
-            </span>
+                <span>
+                  Page {currentPage} of {totalPages}
+                </span>
 
-            <button
-              type="button"
-              onClick={() =>
-                setCurrentPage((page) => page + 1)
-              }
-              disabled={
-                totalPages === 0 ||
-                currentPage >= totalPages
-              }
-            >
-              Next
-            </button>
-          </div>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setCurrentPage((page) => page + 1)
+                  }
+                  disabled={
+                    loading || currentPage >= totalPages
+                  }
+                >
+                  Next
+                </button>
+              </div>
 
-          <p className="pagination-summary">
-            {totalItems} purchase order
-            {totalItems === 1 ? "" : "s"} found
-          </p>
-          {purchaseOrders.length === 0 && (
+              <p className="pagination-summary">
+                {totalItems} purchase order
+                {totalItems === 1 ? "" : "s"} found
+              </p>
+            </>
+          )}
+
+          {!loading && !error && totalItems === 0 && (
             <p className="empty-message">
               No purchase orders found.
             </p>
