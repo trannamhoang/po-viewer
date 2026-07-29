@@ -50,6 +50,10 @@ function App() {
 
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [deleteError, setDeleteError] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(5);
+  const [totalItems, setTotalItems] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
 
   function handleNewPOChange(event) {
     const { name, value } = event.target;
@@ -108,16 +112,9 @@ function App() {
         );
       }
 
-      setPurchaseOrders((currentPurchaseOrders) =>
-        currentPurchaseOrders.map((purchaseOrder) =>
-          purchaseOrder.id === responseData.id
-            ? responseData
-            : purchaseOrder
-        )
-      );
-
       setSelectedPurchaseOrder(responseData);
       setShowEditForm(false);
+      await loadPurchaseOrders();
     } catch (error) {
       setUpdateError(error.message);
     } finally {
@@ -160,12 +157,11 @@ function App() {
         );
       }
 
-      setPurchaseOrders((currentPurchaseOrders) => [
-        ...currentPurchaseOrders,
-        responseData,
-      ]);
-
       setSelectedPurchaseOrder(responseData);
+
+      setCurrentPage(1);
+      setSearchText("");
+      setStatusFilter("All");
 
       setNewPO({
         po_number: "",
@@ -189,24 +185,47 @@ function App() {
     }
   }
 
-  useEffect(() => {
-    fetch(`${API_URL}/purchase-orders`)
-      .then((response) => {
-        if (!response.ok) {
-          throw new Error("Could not load purchase orders");
-        }
+  async function loadPurchaseOrders() {
+    try {
+      setLoading(true);
+      setError("");
 
-        return response.json();
-      })
-      .then((data) => {
-        setPurchaseOrders(data);
-        setLoading(false);
-      })
-      .catch((fetchError) => {
-        setError(fetchError.message);
-        setLoading(false);
+      const queryParameters = new URLSearchParams({
+        page: String(currentPage),
+        page_size: String(pageSize),
       });
-  }, []);
+
+      if (searchText.trim()) {
+        queryParameters.set("search", searchText.trim());
+      }
+
+      if (statusFilter !== "All") {
+        queryParameters.set("status", statusFilter);
+      }
+
+      const response = await fetch(
+        `${API_URL}/purchase-orders?${queryParameters.toString()}`
+      );
+
+      if (!response.ok) {
+        throw new Error("Could not load purchase orders");
+      }
+
+      const responseData = await response.json();
+
+      setPurchaseOrders(responseData.items);
+      setTotalItems(responseData.total_items);
+      setTotalPages(responseData.total_pages);
+    } catch (fetchError) {
+      setError(fetchError.message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    loadPurchaseOrders();
+  }, [currentPage, pageSize, searchText, statusFilter]);
 
   async function selectPurchaseOrder(purchaseOrder) {
     try {
@@ -231,19 +250,6 @@ function App() {
       setDetailLoading(false);
     }
   }
-
-  const filteredPurchaseOrders = purchaseOrders.filter((po) => {
-    const keyword = searchText.toLowerCase();
-
-    const matchesSearch =
-      po.po_number.toLowerCase().includes(keyword) ||
-      po.supplier.toLowerCase().includes(keyword);
-
-    const matchesStatus =
-      statusFilter === "All" || po.status === statusFilter;
-
-    return matchesSearch && matchesStatus;
-  });
 
   function openEditForm() {
     if (!selectedPurchaseOrder) {
@@ -352,15 +358,20 @@ function App() {
         throw new Error(errorMessage);
       }
 
-      setPurchaseOrders((currentPurchaseOrders) =>
-        currentPurchaseOrders.filter(
-          (purchaseOrder) =>
-            purchaseOrder.id !== selectedPurchaseOrder.id
-        )
-      );
+
 
       setSelectedPurchaseOrder(null);
       setShowEditForm(false);
+
+      const shouldGoToPreviousPage =
+        purchaseOrders.length === 1 &&
+        currentPage > 1;
+
+      if (shouldGoToPreviousPage) {
+        setCurrentPage((page) => page - 1);
+      } else {
+        await loadPurchaseOrders();
+      }
     } catch (error) {
       setDeleteError(error.message);
     } finally {
@@ -764,17 +775,34 @@ function App() {
               type="text"
               placeholder="Search by PO number or supplier..."
               value={searchText}
-              onChange={(event) => setSearchText(event.target.value)}
+              onChange={(event) => {
+                setSearchText(event.target.value);
+                setCurrentPage(1);
+              }}
             />
 
             <select
               value={statusFilter}
-              onChange={(event) => setStatusFilter(event.target.value)}
+              onChange={(event) => {
+                setStatusFilter(event.target.value);
+                setCurrentPage(1);
+              }}
             >
               <option value="All">All statuses</option>
               <option value="Open">Open</option>
               <option value="Approved">Approved</option>
               <option value="Completed">Completed</option>
+            </select>
+            <select
+              value={pageSize}
+              onChange={(event) => {
+                setPageSize(Number(event.target.value));
+                setCurrentPage(1);
+              }}
+            >
+              <option value={5}>5 per page</option>
+              <option value={10}>10 per page</option>
+              <option value={20}>20 per page</option>
             </select>
           </div>
           <table>
@@ -788,7 +816,7 @@ function App() {
             </thead>
 
             <tbody>
-              {filteredPurchaseOrders.map((purchaseOrder) => (
+              {purchaseOrders.map((purchaseOrder) => (
                 <tr
                   key={purchaseOrder.id}
                   onClick={() => selectPurchaseOrder(purchaseOrder)}
@@ -807,7 +835,40 @@ function App() {
               ))}
             </tbody>
           </table>
-          {filteredPurchaseOrders.length === 0 && (
+          <div className="pagination">
+            <button
+              type="button"
+              onClick={() =>
+                setCurrentPage((page) => page - 1)
+              }
+              disabled={currentPage <= 1}
+            >
+              Previous
+            </button>
+
+            <span>
+              Page {currentPage} of {totalPages || 1}
+            </span>
+
+            <button
+              type="button"
+              onClick={() =>
+                setCurrentPage((page) => page + 1)
+              }
+              disabled={
+                totalPages === 0 ||
+                currentPage >= totalPages
+              }
+            >
+              Next
+            </button>
+          </div>
+
+          <p className="pagination-summary">
+            {totalItems} purchase order
+            {totalItems === 1 ? "" : "s"} found
+          </p>
+          {purchaseOrders.length === 0 && (
             <p className="empty-message">
               No purchase orders found.
             </p>

@@ -281,3 +281,17 @@ button:disabled {
   color: #666;
   font-size: 14px;
 }
+
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin-top: 20px;
+}
+
+.pagination-summary {
+  margin-top: 10px;
+  color: #666;
+  text-align: center;
+}

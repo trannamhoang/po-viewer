@@ -1,13 +1,21 @@
 from typing import List
 
-from fastapi import Depends, FastAPI, HTTPException, Response
+from fastapi import (
+    Depends,
+    FastAPI,
+    HTTPException,
+    Query,
+    Response,
+)
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, selectinload
-
+from sqlalchemy import or_
 import models
 from database import Base, engine, get_database
+
+import math
 
 
 app = FastAPI(title="PO Viewer API")
@@ -280,15 +288,57 @@ def seed_purchase_orders(
 
 @app.get("/purchase-orders")
 def get_purchase_orders(
+    page: int = Query(default=1, ge=1),
+    page_size: int = Query(default=5, ge=1, le=100),
+    search: str | None = Query(default=None),
+    status: str | None = Query(default=None),
     database: Session = Depends(get_database),
 ):
+    query = database.query(models.PurchaseOrder)
+
+    # Tìm theo PO number hoặc supplier.
+    if search and search.strip():
+        search_value = f"%{search.strip()}%"
+
+        query = query.filter(
+            or_(
+                models.PurchaseOrder.po_number.ilike(
+                    search_value
+                ),
+                models.PurchaseOrder.supplier.ilike(
+                    search_value
+                ),
+            )
+        )
+
+    # Lọc theo trạng thái.
+    if status and status != "All":
+        validate_status(status)
+
+        query = query.filter(
+            models.PurchaseOrder.status == status
+        )
+
+    # Đếm tổng số bản ghi sau khi search/filter.
+    total_items = query.count()
+
+    total_pages = (
+        math.ceil(total_items / page_size)
+        if total_items > 0
+        else 0
+    )
+
+    offset = (page - 1) * page_size
+
     purchase_orders = (
-        database.query(models.PurchaseOrder)
+        query
         .order_by(models.PurchaseOrder.id.desc())
+        .offset(offset)
+        .limit(page_size)
         .all()
     )
 
-    return [
+    items = [
         {
             "id": purchase_order.id,
             "po_number": purchase_order.po_number,
@@ -299,6 +349,14 @@ def get_purchase_orders(
         }
         for purchase_order in purchase_orders
     ]
+
+    return {
+        "items": items,
+        "page": page,
+        "page_size": page_size,
+        "total_items": total_items,
+        "total_pages": total_pages,
+    }
 
 
 @app.get("/purchase-orders/{po_id}")
