@@ -168,3 +168,35 @@ button:disabled {
     grid-template-columns: 1fr;
   }
 }
+
+.detail-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 16px;
+}
+
+.form-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.form-actions button[type="button"] {
+  background: #ddd;
+  color: #222;
+}
+
+.detail-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.delete-button {
+  background: #c62828;
+  color: white;
+}
+
+.delete-button:hover {
+  background: #a61f1f;
+}

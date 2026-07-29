@@ -7,6 +7,8 @@ const API_URL =
 function App() {
   const [purchaseOrders, setPurchaseOrders] = useState([]);
   const [selectedPurchaseOrder, setSelectedPurchaseOrder] = useState(null);
+  const [detailLoading, setDetailLoading] = useState(false);
+  const [detailError, setDetailError] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [searchText, setSearchText] = useState("");
@@ -23,6 +25,23 @@ function App() {
     quantity: 1,
     unit_price: 0,
   });
+  const [showEditForm, setShowEditForm] = useState(false);
+  const [updateLoading, setUpdateLoading] = useState(false);
+  const [updateError, setUpdateError] = useState("");
+
+  const [editPO, setEditPO] = useState({
+    id: null,
+    po_number: "",
+    supplier: "",
+    order_date: "",
+    status: "Open",
+    product: "",
+    quantity: 1,
+    unit_price: 0,
+  });
+
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [deleteError, setDeleteError] = useState("");
 
   function handleNewPOChange(event) {
     const { name, value } = event.target;
@@ -31,6 +50,73 @@ function App() {
       ...currentPO,
       [name]: value,
     }));
+  }
+
+  function handleEditPOChange(event) {
+    const { name, value } = event.target;
+
+    setEditPO((currentPO) => ({
+      ...currentPO,
+      [name]: value,
+    }));
+  }
+
+  async function updatePurchaseOrder(event) {
+    event.preventDefault();
+
+    try {
+      setUpdateLoading(true);
+      setUpdateError("");
+
+      const requestBody = {
+        po_number: editPO.po_number,
+        supplier: editPO.supplier,
+        order_date: editPO.order_date,
+        status: editPO.status,
+        items: [
+          {
+            product: editPO.product,
+            quantity: Number(editPO.quantity),
+            unit_price: Number(editPO.unit_price),
+          },
+        ],
+      };
+
+      const response = await fetch(
+        `${API_URL}/purchase-orders/${editPO.id}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(requestBody),
+        }
+      );
+
+      const responseData = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          responseData.detail ||
+            "Could not update purchase order"
+        );
+      }
+
+      setPurchaseOrders((currentPurchaseOrders) =>
+        currentPurchaseOrders.map((purchaseOrder) =>
+          purchaseOrder.id === responseData.id
+            ? responseData
+            : purchaseOrder
+        )
+      );
+
+      setSelectedPurchaseOrder(responseData);
+      setShowEditForm(false);
+    } catch (error) {
+      setUpdateError(error.message);
+    } finally {
+      setUpdateLoading(false);
+    }
   }
 
   async function createPurchaseOrder(event) {
@@ -114,8 +200,28 @@ function App() {
       });
   }, []);
 
-  function selectPurchaseOrder(purchaseOrder) {
-    setSelectedPurchaseOrder(purchaseOrder);
+  async function selectPurchaseOrder(purchaseOrder) {
+    try {
+      setDetailLoading(true);
+      setDetailError("");
+
+      const response = await fetch(
+        `${API_URL}/purchase-orders/${purchaseOrder.id}`
+      );
+      const responseData = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          responseData.detail || "Could not load purchase order details"
+        );
+      }
+
+      setSelectedPurchaseOrder(responseData);
+    } catch (error) {
+      setDetailError(error.message);
+    } finally {
+      setDetailLoading(false);
+    }
   }
 
   const filteredPurchaseOrders = purchaseOrders.filter((po) => {
@@ -131,6 +237,82 @@ function App() {
     return matchesSearch && matchesStatus;
   });
 
+  function openEditForm() {
+    if (!selectedPurchaseOrder) {
+      return;
+    }
+
+    const firstItem = selectedPurchaseOrder.items[0];
+
+    setEditPO({
+      id: selectedPurchaseOrder.id,
+      po_number: selectedPurchaseOrder.po_number,
+      supplier: selectedPurchaseOrder.supplier,
+      order_date: selectedPurchaseOrder.order_date,
+      status: selectedPurchaseOrder.status,
+      product: firstItem?.product || "",
+      quantity: firstItem?.quantity || 1,
+      unit_price: firstItem?.unit_price || 0,
+    });
+
+    setUpdateError("");
+    setShowCreateForm(false);
+    setShowEditForm(true);
+  }
+
+  async function deletePurchaseOrder() {
+    if (!selectedPurchaseOrder) {
+      return;
+    }
+
+    const confirmed = window.confirm(
+      `Are you sure you want to delete ${selectedPurchaseOrder.po_number}?`
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      setDeleteLoading(true);
+      setDeleteError("");
+
+      const response = await fetch(
+        `${API_URL}/purchase-orders/${selectedPurchaseOrder.id}`,
+        {
+          method: "DELETE",
+        }
+      );
+
+      if (!response.ok) {
+        let errorMessage = "Could not delete purchase order";
+
+        try {
+          const responseData = await response.json();
+          errorMessage = responseData.detail || errorMessage;
+        } catch {
+          // Response không có JSON body.
+        }
+
+        throw new Error(errorMessage);
+      }
+
+      setPurchaseOrders((currentPurchaseOrders) =>
+        currentPurchaseOrders.filter(
+          (purchaseOrder) =>
+            purchaseOrder.id !== selectedPurchaseOrder.id
+        )
+      );
+
+      setSelectedPurchaseOrder(null);
+      setShowEditForm(false);
+    } catch (error) {
+      setDeleteError(error.message);
+    } finally {
+      setDeleteLoading(false);
+    }
+  }
+
   if (loading) {
     return <main className="container">Loading purchase orders...</main>;
   }
@@ -144,7 +326,10 @@ function App() {
       <h1>Purchase Order App</h1>
       <button
         type="button"
-        onClick={() => setShowCreateForm(!showCreateForm)}
+        onClick={() => {
+          setShowCreateForm((currentValue) => !currentValue);
+          setShowEditForm(false);
+        }}
       >
         {showCreateForm ? "Cancel" : "Create PO"}
       </button>
@@ -247,6 +432,119 @@ function App() {
           </form>
         </section>
       )}
+      {showEditForm && (
+        <section className="create-form-section">
+          <h2>Edit Purchase Order</h2>
+
+          {updateError && (
+            <p className="error-message">{updateError}</p>
+          )}
+
+          <form onSubmit={updatePurchaseOrder}>
+            <div className="form-grid">
+              <label>
+                PO Number
+                <input
+                  type="text"
+                  name="po_number"
+                  value={editPO.po_number}
+                  onChange={handleEditPOChange}
+                  required
+                />
+              </label>
+
+              <label>
+                Supplier
+                <input
+                  type="text"
+                  name="supplier"
+                  value={editPO.supplier}
+                  onChange={handleEditPOChange}
+                  required
+                />
+              </label>
+
+              <label>
+                Order Date
+                <input
+                  type="date"
+                  name="order_date"
+                  value={editPO.order_date}
+                  onChange={handleEditPOChange}
+                  required
+                />
+              </label>
+
+              <label>
+                Status
+                <select
+                  name="status"
+                  value={editPO.status}
+                  onChange={handleEditPOChange}
+                >
+                  <option value="Open">Open</option>
+                  <option value="Approved">Approved</option>
+                  <option value="Completed">Completed</option>
+                </select>
+              </label>
+
+              <label>
+                Product
+                <input
+                  type="text"
+                  name="product"
+                  value={editPO.product}
+                  onChange={handleEditPOChange}
+                  required
+                />
+              </label>
+
+              <label>
+                Quantity
+                <input
+                  type="number"
+                  name="quantity"
+                  min="1"
+                  value={editPO.quantity}
+                  onChange={handleEditPOChange}
+                  required
+                />
+              </label>
+
+              <label>
+                Unit Price
+                <input
+                  type="number"
+                  name="unit_price"
+                  min="0"
+                  step="0.01"
+                  value={editPO.unit_price}
+                  onChange={handleEditPOChange}
+                  required
+                />
+              </label>
+            </div>
+
+            <div className="form-actions">
+              <button
+                type="submit"
+                disabled={updateLoading}
+              >
+                {updateLoading
+                  ? "Updating..."
+                  : "Update Purchase Order"}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setShowEditForm(false)}
+              >
+                Cancel
+              </button>
+            </div>
+          </form>
+        </section>
+      )}
       <div className="layout">
         <section>
           <h2>Purchase Orders</h2>
@@ -301,13 +599,40 @@ function App() {
 
         <section className="details">
           <h2>PO Details</h2>
+          {deleteError && (
+            <p className="error-message">{deleteError}</p>
+          )}
+          {detailLoading && <p>Loading purchase order details...</p>}
 
-          {!selectedPurchaseOrder && (
-            <p>Select a purchase order to view its details.</p>
+          {detailError && (
+            <p className="error-message">{detailError}</p>
           )}
 
-          {selectedPurchaseOrder && (
+          {!detailLoading && !detailError && !selectedPurchaseOrder && (
+            <p>Select a purchase order to view its details.</p>
+            
+          )}
+
+          {!detailLoading && !detailError && selectedPurchaseOrder && (
             <>
+            <div className="detail-actions">
+              <button
+                type="button"
+                onClick={openEditForm}
+                disabled={deleteLoading}
+              >
+                Edit PO
+              </button>
+
+              <button
+                type="button"
+                className="delete-button"
+                onClick={deletePurchaseOrder}
+                disabled={deleteLoading}
+              >
+                {deleteLoading ? "Deleting..." : "Delete PO"}
+              </button>
+            </div>
               <p>
                 <strong>PO Number:</strong>{" "}
                 {selectedPurchaseOrder.po_number}

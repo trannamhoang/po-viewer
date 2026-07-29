@@ -22,3 +22,7 @@ frontend/dist/
 # Operating system
 .DS_Store
 Thumbs.db
+
+# SQLite database
+backend/po_viewer.db
+backend/po_viewer.db-journal
