@@ -1,28 +1,49 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import PurchaseOrderDetails from "./components/PurchaseOrderDetails";
 import PurchaseOrderFilters from "./components/PurchaseOrderFilters";
 import PurchaseOrderForm from "./components/PurchaseOrderForm";
 import PurchaseOrderList from "./components/PurchaseOrderList";
+import usePurchaseOrders from "./hooks/usePurchaseOrders";
 import {
   createPurchaseOrder as createPurchaseOrderApi,
   deletePurchaseOrder as deletePurchaseOrderApi,
   getPurchaseOrderById,
-  getPurchaseOrders,
   updatePurchaseOrder as updatePurchaseOrderApi,
 } from "./services/purchaseOrderApi";
 import "./App.css";
 
 function App() {
-  const [purchaseOrders, setPurchaseOrders] = useState([]);
+  const {
+    purchaseOrders,
+    loading,
+    error,
+
+    searchText,
+    statusFilter,
+    isSearchWaiting,
+
+    currentPage,
+    pageSize,
+    totalItems,
+    totalPages,
+
+    setSearchText,
+    setCurrentPage,
+
+    changeStatusFilter,
+    changePageSize,
+    clearSearch,
+
+    goToPreviousPage,
+    goToNextPage,
+
+    refreshPurchaseOrders,
+    resetPurchaseOrderFilters,
+  } = usePurchaseOrders();
+
   const [selectedPurchaseOrder, setSelectedPurchaseOrder] = useState(null);
   const [detailLoading, setDetailLoading] = useState(false);
   const [detailError, setDetailError] = useState("");
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [searchText, setSearchText] = useState("");
-  const [debouncedSearchText, setDebouncedSearchText] =
-    useState("");
-  const [statusFilter, setStatusFilter] = useState("All");
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [createLoading, setCreateLoading] = useState(false);
   const [createError, setCreateError] = useState("");
@@ -60,22 +81,6 @@ function App() {
 
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [deleteError, setDeleteError] = useState("");
-  const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(5);
-  const [totalItems, setTotalItems] = useState(0);
-  const [totalPages, setTotalPages] = useState(0);
-  const [refreshKey, setRefreshKey] = useState(0);
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedSearchText(searchText);
-      setCurrentPage(1);
-    }, 500);
-
-    return () => {
-      clearTimeout(timer);
-    };
-  }, [searchText]);
 
   function handleNewPOChange(event) {
     const { name, value } = event.target;
@@ -120,7 +125,7 @@ function App() {
       );
 
       setSelectedPurchaseOrder(responseData);
-      setRefreshKey((currentValue) => currentValue + 1);
+      refreshPurchaseOrders();
       setShowEditForm(false);
     } catch (error) {
       setUpdateError(error.message);
@@ -151,12 +156,8 @@ function App() {
       const responseData = await createPurchaseOrderApi(requestBody);
 
       setSelectedPurchaseOrder(responseData);
-      setRefreshKey((currentValue) => currentValue + 1);
-
-      setCurrentPage(1);
-      setSearchText("");
-      setStatusFilter("All");
-      setDebouncedSearchText("");
+      resetPurchaseOrderFilters();
+      refreshPurchaseOrders();
 
       setNewPO({
         po_number: "",
@@ -179,49 +180,6 @@ function App() {
       setCreateLoading(false);
     }
   }
-
-  useEffect(() => {
-    const controller = new AbortController();
-
-    async function loadPurchaseOrders() {
-      try {
-        setLoading(true);
-        setError("");
-
-        const responseData = await getPurchaseOrders({
-          page: currentPage,
-          pageSize,
-          search: debouncedSearchText,
-          status: statusFilter,
-          signal: controller.signal,
-        });
-
-        setPurchaseOrders(responseData.items);
-        setTotalItems(responseData.total_items);
-        setTotalPages(responseData.total_pages);
-      } catch (fetchError) {
-        if (fetchError.name !== "AbortError") {
-          setError(fetchError.message);
-        }
-      } finally {
-        if (!controller.signal.aborted) {
-          setLoading(false);
-        }
-      }
-    }
-
-    loadPurchaseOrders();
-
-    return () => {
-      controller.abort();
-    };
-  }, [
-    currentPage,
-    pageSize,
-    debouncedSearchText,
-    refreshKey,
-    statusFilter,
-  ]);
 
   async function selectPurchaseOrder(purchaseOrder) {
     try {
@@ -338,7 +296,7 @@ function App() {
       if (shouldGoToPreviousPage) {
         setCurrentPage((page) => page - 1);
       } else {
-        setRefreshKey((currentValue) => currentValue + 1);
+        refreshPurchaseOrders();
       }
     } catch (error) {
       setDeleteError(error.message);
@@ -413,9 +371,6 @@ function App() {
   const canEditPurchaseOrderContent =
     selectedPurchaseOrder?.status === "Open";
 
-  const isSearchWaiting =
-    searchText !== debouncedSearchText;
-
   return (
     <main className="container">
       <h1>Purchase Order App</h1>
@@ -483,15 +438,9 @@ function App() {
             statusFilter={statusFilter}
             pageSize={pageSize}
             onSearchChange={setSearchText}
-            onClearSearch={() => setSearchText("")}
-            onStatusChange={(newStatus) => {
-              setStatusFilter(newStatus);
-              setCurrentPage(1);
-            }}
-            onPageSizeChange={(newPageSize) => {
-              setPageSize(newPageSize);
-              setCurrentPage(1);
-            }}
+            onClearSearch={clearSearch}
+            onStatusChange={changeStatusFilter}
+            onPageSizeChange={changePageSize}
           />
 
           <PurchaseOrderList
@@ -505,12 +454,8 @@ function App() {
               selectedPurchaseOrder?.id ?? null
             }
             onSelectPurchaseOrder={selectPurchaseOrder}
-            onPreviousPage={() =>
-              setCurrentPage((page) => page - 1)
-            }
-            onNextPage={() =>
-              setCurrentPage((page) => page + 1)
-            }
+            onPreviousPage={goToPreviousPage}
+            onNextPage={goToNextPage}
           />
         </section>
 
