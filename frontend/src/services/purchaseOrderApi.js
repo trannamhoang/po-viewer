@@ -55,6 +55,17 @@ export async function getPurchaseOrders({
   return handleResponse(response, "Could not load purchase orders");
 }
 
+export async function getPurchaseOrderSummary({ signal } = {}) {
+  const response = await fetch(`${API_URL}/purchase-orders/summary`, {
+    signal,
+  });
+
+  return handleResponse(
+    response,
+    "Could not load purchase order summary"
+  );
+}
+
 export async function getPurchaseOrderById(
   purchaseOrderId,
   { signal } = {}

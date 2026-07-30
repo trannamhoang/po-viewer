@@ -1,83 +1,8 @@
-import { useEffect, useState } from "react";
-import {
-  ALL_STATUS_FILTER,
-  PURCHASE_ORDER_STATUS,
-} from "../constants/purchaseOrderConstants";
-import { getPurchaseOrders } from "../services/purchaseOrderApi";
+import usePurchaseOrderSummary from "../hooks/usePurchaseOrderSummary";
 
 function DashboardPage() {
-  const [summary, setSummary] = useState({
-    total: 0,
-    open: 0,
-    approved: 0,
-    completed: 0,
-  });
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-
-  useEffect(() => {
-    const controller = new AbortController();
-
-    async function loadDashboard() {
-      try {
-        setLoading(true);
-        setError("");
-
-        const [allResponse, openResponse, approvedResponse, completedResponse] =
-          await Promise.all([
-            getPurchaseOrders({
-              page: 1,
-              pageSize: 1,
-              search: "",
-              status: ALL_STATUS_FILTER,
-              signal: controller.signal,
-            }),
-            getPurchaseOrders({
-              page: 1,
-              pageSize: 1,
-              search: "",
-              status: PURCHASE_ORDER_STATUS.OPEN,
-              signal: controller.signal,
-            }),
-            getPurchaseOrders({
-              page: 1,
-              pageSize: 1,
-              search: "",
-              status: PURCHASE_ORDER_STATUS.APPROVED,
-              signal: controller.signal,
-            }),
-            getPurchaseOrders({
-              page: 1,
-              pageSize: 1,
-              search: "",
-              status: PURCHASE_ORDER_STATUS.COMPLETED,
-              signal: controller.signal,
-            }),
-          ]);
-
-        setSummary({
-          total: allResponse.total_items,
-          open: openResponse.total_items,
-          approved: approvedResponse.total_items,
-          completed: completedResponse.total_items,
-        });
-      } catch (requestError) {
-        if (requestError.name !== "AbortError") {
-          setError(requestError.message);
-        }
-      } finally {
-        if (!controller.signal.aborted) {
-          setLoading(false);
-        }
-      }
-    }
-
-    loadDashboard();
-
-    return () => {
-      controller.abort();
-    };
-  }, []);
+  const { summary, loading, error, refreshSummary } =
+    usePurchaseOrderSummary();
 
   return (
     <section className="dashboard-page">
@@ -86,6 +11,14 @@ function DashboardPage() {
           <h2>Dashboard</h2>
           <p>Overview of purchase order activity.</p>
         </div>
+
+        <button
+          type="button"
+          onClick={refreshSummary}
+          disabled={loading}
+        >
+          {loading ? "Refreshing..." : "Refresh"}
+        </button>
       </div>
 
       {loading && (
@@ -95,9 +28,13 @@ function DashboardPage() {
       )}
 
       {error && (
-        <p className="error-message" role="alert">
-          {error}
-        </p>
+        <div role="alert">
+          <p className="error-message">{error}</p>
+
+          <button type="button" onClick={refreshSummary}>
+            Try again
+          </button>
+        </div>
       )}
 
       {!loading && !error && (

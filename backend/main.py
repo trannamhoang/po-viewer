@@ -11,7 +11,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, selectinload
-from sqlalchemy import or_
+from sqlalchemy import case, func, or_
 import models
 from database import Base, engine, get_database
 
@@ -58,6 +58,13 @@ class PurchaseOrderUpdate(BaseModel):
     order_date: str
     status: str
     items: List[PurchaseOrderItemRequest]
+
+
+class PurchaseOrderSummaryResponse(BaseModel):
+    total: int
+    open: int
+    approved: int
+    completed: int
 
 VALID_STATUSES = {
     "Open",
@@ -356,6 +363,69 @@ def get_purchase_orders(
         "page_size": page_size,
         "total_items": total_items,
         "total_pages": total_pages,
+    }
+
+
+@app.get(
+    "/purchase-orders/summary",
+    response_model=PurchaseOrderSummaryResponse,
+)
+def get_purchase_order_summary(
+    database: Session = Depends(get_database),
+):
+    summary = (
+        database.query(
+            func.count(
+                models.PurchaseOrder.id
+            ).label("total"),
+            func.coalesce(
+                func.sum(
+                    case(
+                        (
+                            models.PurchaseOrder.status
+                            == "Open",
+                            1,
+                        ),
+                        else_=0,
+                    )
+                ),
+                0,
+            ).label("open"),
+            func.coalesce(
+                func.sum(
+                    case(
+                        (
+                            models.PurchaseOrder.status
+                            == "Approved",
+                            1,
+                        ),
+                        else_=0,
+                    )
+                ),
+                0,
+            ).label("approved"),
+            func.coalesce(
+                func.sum(
+                    case(
+                        (
+                            models.PurchaseOrder.status
+                            == "Completed",
+                            1,
+                        ),
+                        else_=0,
+                    )
+                ),
+                0,
+            ).label("completed"),
+        )
+        .one()
+    )
+
+    return {
+        "total": int(summary.total),
+        "open": int(summary.open),
+        "approved": int(summary.approved),
+        "completed": int(summary.completed),
     }
 
 
