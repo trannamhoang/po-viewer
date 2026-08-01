@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Literal
 
 from fastapi import (
     Depends,
@@ -301,6 +301,17 @@ def get_purchase_orders(
     page_size: int = Query(default=5, ge=1, le=100),
     search: str | None = Query(default=None),
     status: str | None = Query(default=None),
+    sort_by: Literal[
+        "po_number",
+        "supplier",
+        "order_date",
+        "status",
+        "total_amount",
+    ] = "order_date",
+    sort_direction: Literal[
+        "asc",
+        "desc",
+    ] = "desc",
     database: Session = Depends(get_database),
 ):
     query = database.query(models.PurchaseOrder)
@@ -339,9 +350,28 @@ def get_purchase_orders(
 
     offset = (page - 1) * page_size
 
+    sort_columns = {
+        "po_number": models.PurchaseOrder.po_number,
+        "supplier": models.PurchaseOrder.supplier,
+        "order_date": models.PurchaseOrder.order_date,
+        "status": models.PurchaseOrder.status,
+        "total_amount": models.PurchaseOrder.total_amount,
+    }
+    sort_column = sort_columns[sort_by]
+
+    if sort_direction == "asc":
+        query = query.order_by(
+            sort_column.asc(),
+            models.PurchaseOrder.id.asc(),
+        )
+    else:
+        query = query.order_by(
+            sort_column.desc(),
+            models.PurchaseOrder.id.desc(),
+        )
+
     purchase_orders = (
         query
-        .order_by(models.PurchaseOrder.id.desc())
         .offset(offset)
         .limit(page_size)
         .all()

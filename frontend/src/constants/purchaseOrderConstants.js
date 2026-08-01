@@ -8,6 +8,24 @@ export const ALL_STATUS_FILTER = "All";
 
 export const PAGE_SIZE_OPTIONS = [5, 10, 20];
 
+export const PURCHASE_ORDER_SORT_FIELD = {
+  ORDER_DATE: "order_date",
+  PO_NUMBER: "po_number",
+  SUPPLIER: "supplier",
+  STATUS: "status",
+  TOTAL_AMOUNT: "total_amount",
+};
+
+export const SORT_DIRECTION = {
+  ASCENDING: "asc",
+  DESCENDING: "desc",
+};
+
+export const DEFAULT_PURCHASE_ORDER_SORT = {
+  field: PURCHASE_ORDER_SORT_FIELD.ORDER_DATE,
+  direction: SORT_DIRECTION.DESCENDING,
+};
+
 export const STATUS_TRANSITIONS = {
   [PURCHASE_ORDER_STATUS.OPEN]: [
     PURCHASE_ORDER_STATUS.OPEN,

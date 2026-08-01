@@ -1,5 +1,42 @@
 import Pagination from "./Pagination";
+import {
+  PURCHASE_ORDER_SORT_FIELD,
+  SORT_DIRECTION,
+} from "../constants/purchaseOrderConstants";
 import { formatCurrency } from "../utils/purchaseOrderUtils";
+
+function SortableHeader({
+  field,
+  label,
+  sortBy,
+  sortDirection,
+  onSort,
+}) {
+  const isActive = sortBy === field;
+  const directionLabel =
+    sortDirection === SORT_DIRECTION.ASCENDING
+      ? "ascending"
+      : "descending";
+
+  return (
+    <th aria-sort={isActive ? directionLabel : "none"}>
+      <button
+        type="button"
+        className="table-sort-button"
+        onClick={() => onSort(field)}
+      >
+        <span>{label}</span>
+        <span aria-hidden="true" className="sort-indicator">
+          {!isActive
+            ? "↕"
+            : sortDirection === SORT_DIRECTION.ASCENDING
+              ? "↑"
+              : "↓"}
+        </span>
+      </button>
+    </th>
+  );
+}
 
 function PurchaseOrderList({
   purchaseOrders,
@@ -8,7 +45,10 @@ function PurchaseOrderList({
   totalItems,
   currentPage,
   totalPages,
+  sortBy,
+  sortDirection,
   selectedPurchaseOrderId,
+  onSort,
   onSelectPurchaseOrder,
   onPreviousPage,
   onNextPage,
@@ -31,10 +71,41 @@ function PurchaseOrderList({
         <table>
           <thead>
             <tr>
-              <th>PO Number</th>
-              <th>Supplier</th>
-              <th>Status</th>
-              <th>Total</th>
+              <SortableHeader
+                field={PURCHASE_ORDER_SORT_FIELD.PO_NUMBER}
+                label="PO Number"
+                sortBy={sortBy}
+                sortDirection={sortDirection}
+                onSort={onSort}
+              />
+              <SortableHeader
+                field={PURCHASE_ORDER_SORT_FIELD.SUPPLIER}
+                label="Supplier"
+                sortBy={sortBy}
+                sortDirection={sortDirection}
+                onSort={onSort}
+              />
+              <SortableHeader
+                field={PURCHASE_ORDER_SORT_FIELD.ORDER_DATE}
+                label="Order Date"
+                sortBy={sortBy}
+                sortDirection={sortDirection}
+                onSort={onSort}
+              />
+              <SortableHeader
+                field={PURCHASE_ORDER_SORT_FIELD.STATUS}
+                label="Status"
+                sortBy={sortBy}
+                sortDirection={sortDirection}
+                onSort={onSort}
+              />
+              <SortableHeader
+                field={PURCHASE_ORDER_SORT_FIELD.TOTAL_AMOUNT}
+                label="Total"
+                sortBy={sortBy}
+                sortDirection={sortDirection}
+                onSort={onSort}
+              />
             </tr>
           </thead>
 
@@ -53,6 +124,7 @@ function PurchaseOrderList({
               >
                 <td>{purchaseOrder.po_number}</td>
                 <td>{purchaseOrder.supplier}</td>
+                <td>{purchaseOrder.order_date}</td>
 
                 <td>
                   <span

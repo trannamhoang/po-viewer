@@ -32,6 +32,8 @@ export async function getPurchaseOrders({
   pageSize,
   search,
   status,
+  sortBy,
+  sortDirection,
   signal,
 }) {
   const queryParameters = new URLSearchParams({
@@ -45,6 +47,14 @@ export async function getPurchaseOrders({
 
   if (status && status !== ALL_STATUS_FILTER) {
     queryParameters.set("status", status);
+  }
+
+  if (sortBy) {
+    queryParameters.set("sort_by", sortBy);
+  }
+
+  if (sortDirection) {
+    queryParameters.set("sort_direction", sortDirection);
   }
 
   const response = await fetch(

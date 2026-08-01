@@ -28,6 +28,8 @@ function PurchaseOrdersPage() {
     searchText,
     statusFilter,
     isSearchWaiting,
+    sortBy,
+    sortDirection,
     currentPage,
     pageSize,
     totalItems,
@@ -36,6 +38,7 @@ function PurchaseOrdersPage() {
     setCurrentPage,
     changeStatusFilter,
     changePageSize,
+    changeSorting,
     clearSearch,
     goToPreviousPage,
     goToNextPage,
@@ -311,7 +314,10 @@ function PurchaseOrdersPage() {
             totalItems={totalItems}
             currentPage={currentPage}
             totalPages={totalPages}
+            sortBy={sortBy}
+            sortDirection={sortDirection}
             selectedPurchaseOrderId={selectedPurchaseOrder?.id ?? null}
+            onSort={changeSorting}
             onSelectPurchaseOrder={handleSelectPurchaseOrder}
             onPreviousPage={goToPreviousPage}
             onNextPage={goToNextPage}

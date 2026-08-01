@@ -99,6 +99,35 @@ td {
   text-align: left;
 }
 
+.table-sort-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-weight: 700;
+  text-align: left;
+  cursor: pointer;
+}
+
+.table-sort-button:hover {
+  color: #3730a3;
+}
+
+.table-sort-button:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 4px;
+}
+
+.sort-indicator {
+  font-size: 0.85rem;
+  opacity: 0.75;
+}
+
 tbody tr {
   cursor: pointer;
 }
