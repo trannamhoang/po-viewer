@@ -1,4 +1,5 @@
 import { PURCHASE_ORDER_STATUS } from "../constants/purchaseOrderConstants";
+import { formatCurrency } from "../utils/purchaseOrderUtils";
 
 function PurchaseOrderDetails({
   purchaseOrder,
@@ -141,10 +142,9 @@ function PurchaseOrderDetails({
             <tr key={item.id || index}>
               <td>{item.product}</td>
               <td>{item.quantity}</td>
-              <td>${item.unit_price.toLocaleString()}</td>
+              <td>{formatCurrency(item.unit_price)}</td>
               <td>
-                $
-                {(item.quantity * item.unit_price).toLocaleString()}
+                {formatCurrency(item.quantity * item.unit_price)}
               </td>
             </tr>
           ))}
@@ -152,7 +152,7 @@ function PurchaseOrderDetails({
       </table>
 
       <p className="total">
-        Total: ${purchaseOrder.total_amount.toLocaleString()}
+        Total: {formatCurrency(purchaseOrder.total_amount)}
       </p>
 
       {isApproved && (

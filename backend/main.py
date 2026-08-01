@@ -65,6 +65,8 @@ class PurchaseOrderSummaryResponse(BaseModel):
     open: int
     approved: int
     completed: int
+    total_value: float
+    average_value: float
 
 VALID_STATUSES = {
     "Open",
@@ -417,6 +419,18 @@ def get_purchase_order_summary(
                 ),
                 0,
             ).label("completed"),
+            func.coalesce(
+                func.sum(
+                    models.PurchaseOrder.total_amount
+                ),
+                0,
+            ).label("total_value"),
+            func.coalesce(
+                func.avg(
+                    models.PurchaseOrder.total_amount
+                ),
+                0,
+            ).label("average_value"),
         )
         .one()
     )
@@ -426,6 +440,8 @@ def get_purchase_order_summary(
         "open": int(summary.open),
         "approved": int(summary.approved),
         "completed": int(summary.completed),
+        "total_value": float(summary.total_value),
+        "average_value": float(summary.average_value),
     }
 
 

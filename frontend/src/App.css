@@ -234,7 +234,7 @@ tbody tr:hover {
 
 .dashboard-grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 20px;
 }
 
@@ -258,6 +258,7 @@ tbody tr:hover {
 .summary-value {
   color: #0f172a;
   font-size: 2rem;
+  overflow-wrap: anywhere;
 }
 
 @media (max-width: 900px) {

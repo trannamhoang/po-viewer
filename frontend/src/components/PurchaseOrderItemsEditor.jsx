@@ -1,4 +1,7 @@
-import { calculatePurchaseOrderTotal } from "../utils/purchaseOrderUtils";
+import {
+  calculatePurchaseOrderTotal,
+  formatCurrency,
+} from "../utils/purchaseOrderUtils";
 
 function PurchaseOrderItemsEditor({
   items,
@@ -99,7 +102,7 @@ function PurchaseOrderItemsEditor({
       })}
 
       <p className="form-total">
-        Estimated total: ${estimatedTotal.toLocaleString()}
+        Estimated total: {formatCurrency(estimatedTotal)}
       </p>
     </div>
   );

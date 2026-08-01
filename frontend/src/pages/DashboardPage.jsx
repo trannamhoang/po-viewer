@@ -1,4 +1,5 @@
 import usePurchaseOrderSummary from "../hooks/usePurchaseOrderSummary";
+import { formatCurrency } from "../utils/purchaseOrderUtils";
 
 function DashboardPage() {
   const { summary, loading, error, refreshSummary } =
@@ -57,6 +58,20 @@ function DashboardPage() {
           <article className="summary-card">
             <span className="summary-label">Completed</span>
             <strong className="summary-value">{summary.completed}</strong>
+          </article>
+
+          <article className="summary-card">
+            <span className="summary-label">Total order value</span>
+            <strong className="summary-value">
+              {formatCurrency(summary.total_value)}
+            </strong>
+          </article>
+
+          <article className="summary-card">
+            <span className="summary-label">Average order value</span>
+            <strong className="summary-value">
+              {formatCurrency(summary.average_value)}
+            </strong>
           </article>
         </div>
       )}

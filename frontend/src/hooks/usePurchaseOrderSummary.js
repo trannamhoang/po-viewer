@@ -6,6 +6,8 @@ const EMPTY_SUMMARY = {
   open: 0,
   approved: 0,
   completed: 0,
+  total_value: 0,
+  average_value: 0,
 };
 
 export default function usePurchaseOrderSummary() {

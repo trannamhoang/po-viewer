@@ -1,4 +1,5 @@
 import Pagination from "./Pagination";
+import { formatCurrency } from "../utils/purchaseOrderUtils";
 
 function PurchaseOrderList({
   purchaseOrders,
@@ -61,9 +62,7 @@ function PurchaseOrderList({
                   </span>
                 </td>
 
-                <td>
-                  ${purchaseOrder.total_amount.toLocaleString()}
-                </td>
+                <td>{formatCurrency(purchaseOrder.total_amount)}</td>
               </tr>
             ))}
           </tbody>
