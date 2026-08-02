@@ -1,31 +1,50 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useSearchParams } from "react-router";
 import {
   ALL_STATUS_FILTER,
   DEFAULT_PURCHASE_ORDER_SORT,
   SORT_DIRECTION,
 } from "../constants/purchaseOrderConstants";
 import { getPurchaseOrders } from "../services/purchaseOrderApi";
+import {
+  arePurchaseOrderQueriesEqual,
+  buildPurchaseOrderQuery,
+  parsePurchaseOrderQuery,
+} from "../utils/purchaseOrderQueryUtils";
 
 export default function usePurchaseOrders() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [initialQuery] = useState(() =>
+    parsePurchaseOrderQuery(searchParams)
+  );
+  const currentQueryRef = useRef(null);
+  const isApplyingUrlStateRef = useRef(false);
+
   const [purchaseOrders, setPurchaseOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  const [searchText, setSearchText] = useState("");
-  const [debouncedSearchText, setDebouncedSearchText] = useState("");
-  const [statusFilter, setStatusFilter] = useState(ALL_STATUS_FILTER);
-  const [sortBy, setSortBy] = useState(DEFAULT_PURCHASE_ORDER_SORT.field);
+  const [searchText, setSearchText] = useState(initialQuery.search);
+  const [debouncedSearchText, setDebouncedSearchText] = useState(
+    initialQuery.search
+  );
+  const [statusFilter, setStatusFilter] = useState(initialQuery.status);
+  const [sortBy, setSortBy] = useState(initialQuery.sortBy);
   const [sortDirection, setSortDirection] = useState(
-    DEFAULT_PURCHASE_ORDER_SORT.direction
+    initialQuery.sortDirection
   );
 
-  const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(5);
+  const [currentPage, setCurrentPage] = useState(initialQuery.page);
+  const [pageSize, setPageSize] = useState(initialQuery.pageSize);
   const [totalItems, setTotalItems] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
   const [refreshKey, setRefreshKey] = useState(0);
 
   useEffect(() => {
+    if (searchText === debouncedSearchText) {
+      return;
+    }
+
     const timer = setTimeout(() => {
       setDebouncedSearchText(searchText);
       setCurrentPage(1);
@@ -34,7 +53,78 @@ export default function usePurchaseOrders() {
     return () => {
       clearTimeout(timer);
     };
-  }, [searchText]);
+  }, [searchText, debouncedSearchText]);
+
+  useEffect(() => {
+    currentQueryRef.current = {
+      page: currentPage,
+      pageSize,
+      search: debouncedSearchText,
+      status: statusFilter,
+      sortBy,
+      sortDirection,
+    };
+  }, [
+    currentPage,
+    pageSize,
+    debouncedSearchText,
+    statusFilter,
+    sortBy,
+    sortDirection,
+  ]);
+
+  useEffect(() => {
+    const parsedQuery = parsePurchaseOrderQuery(searchParams);
+
+    if (
+      arePurchaseOrderQueriesEqual(
+        parsedQuery,
+        currentQueryRef.current
+      )
+    ) {
+      return;
+    }
+
+    isApplyingUrlStateRef.current = true;
+    setCurrentPage(parsedQuery.page);
+    setPageSize(parsedQuery.pageSize);
+    setSearchText(parsedQuery.search);
+    setDebouncedSearchText(parsedQuery.search);
+    setStatusFilter(parsedQuery.status);
+    setSortBy(parsedQuery.sortBy);
+    setSortDirection(parsedQuery.sortDirection);
+  }, [searchParams]);
+
+  useEffect(() => {
+    if (isApplyingUrlStateRef.current) {
+      isApplyingUrlStateRef.current = false;
+      return;
+    }
+
+    const nextSearchParams = buildPurchaseOrderQuery({
+      page: currentPage,
+      pageSize,
+      search: debouncedSearchText,
+      status: statusFilter,
+      sortBy,
+      sortDirection,
+    });
+
+    if (nextSearchParams.toString() === searchParams.toString()) {
+      return;
+    }
+
+    setSearchParams(nextSearchParams, { replace: true });
+  }, [
+    currentPage,
+    pageSize,
+    debouncedSearchText,
+    statusFilter,
+    sortBy,
+    sortDirection,
+    searchParams,
+    setSearchParams,
+  ]);
 
   useEffect(() => {
     const controller = new AbortController();

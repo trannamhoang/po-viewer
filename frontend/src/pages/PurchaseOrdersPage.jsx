@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router";
+import { useLocation, useNavigate, useParams } from "react-router";
 import ConfirmDialog from "../components/ConfirmDialog";
 import PurchaseOrderDetails from "../components/PurchaseOrderDetails";
 import PurchaseOrderFilters from "../components/PurchaseOrderFilters";
@@ -17,6 +17,7 @@ import "../App.css";
 
 function PurchaseOrdersPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { purchaseOrderId } = useParams();
 
   const { toast, showSuccessToast, showErrorToast, hideToast } = useToast();
@@ -119,7 +120,10 @@ function PurchaseOrdersPage() {
     setDeleteError("");
     setShowDeleteConfirmation(false);
     closeAllForms();
-    navigate(`/purchase-orders/${purchaseOrder.id}`);
+    navigate({
+      pathname: `/purchase-orders/${purchaseOrder.id}`,
+      search: location.search,
+    });
   }
 
   function requestDeletePurchaseOrder() {
@@ -156,7 +160,13 @@ function PurchaseOrdersPage() {
       setShowDeleteConfirmation(false);
       clearSelectedPurchaseOrder();
       closeAllForms();
-      navigate("/purchase-orders", { replace: true });
+      navigate(
+        {
+          pathname: "/purchase-orders",
+          search: location.search,
+        },
+        { replace: true }
+      );
 
       showSuccessToast(
         `Purchase order ${deletedPONumber} was deleted successfully.`
@@ -204,7 +214,10 @@ function PurchaseOrdersPage() {
     setShowDeleteConfirmation(false);
     closeAllForms();
     clearSelectedPurchaseOrder();
-    navigate("/purchase-orders");
+    navigate({
+      pathname: "/purchase-orders",
+      search: location.search,
+    });
   }
 
   return (
